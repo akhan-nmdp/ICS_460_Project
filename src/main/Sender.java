@@ -31,13 +31,13 @@ public class Sender {
         int ackNumberValue = 1;
         
       //Gathering program inputs
-        System.out.println("What is the name of the file you wish to transfer? (eg. 'test.txt'). ");
+        System.out.println("Please enter a text file to trasmfer: ");
         fileName = inputs.nextLine();
-        System.out.println("What size would you like each packet to be? Note: Must be greater than 0.");
+        System.out.println("Please enter a packet size greater than 0:");
         packetSize = inputs.nextInt();
-        System.out.println("What is the percentage of packets that should be corrupted during transmission of the data?");
+        System.out.println("Please enter the percentage of packet that should be corupputed while sending data:");
         corruption = inputs.nextInt();
-        System.out.println("What is the time it should take to resend a packet if it is lost?");
+        System.out.println("Please enter the time(in ms)to resend the packet: ");
         timeout = inputs.nextInt();
         socket.setSoTimeout(timeout);
 
@@ -57,12 +57,12 @@ public class Sender {
                 else {
                     currentPacket.setCksum((short) 0);
                 }
-                System.out.println("[SENDing] packet " + currentPacket.getSeqno() + " to the server...");
+                System.out.println("[SENDing] packet " + currentPacket.getSeqno());
                 DatagramPacket output = new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, PORT);
                 socket.send(output);
 
                 //this is where the ack is received
-                System.out.println("Waiting for the ack of packet number " + currentPacket.getSeqno() + " from the server...");
+                System.out.println("Waiting for the [Ack] for packet " + currentPacket.getSeqno());
                 byte[] receiveData = new byte[1024];
                 DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 socket.receive(receivePacket);
@@ -90,7 +90,7 @@ public class Sender {
                 
             } catch (SocketTimeoutException ste) {
                 //If we lost the packet during transmission--resend
-                System.out.println("[ReSend.]: packet "+ (ackNumberValue +1)+ "because ACK was lost.");
+                System.out.println("[ReSend.]: packet "+ (ackNumberValue +1)+ "because [Ack] was lost.");
 //                System.out.println("ACK for packet " + (ackNumberValue + 1) + " was lost. Waiting for packet " + (ackNumberValue + 1) + " to be [ReSend.]: by the server...");
                 packets.addFirst(currentPacket);
             }
