@@ -70,7 +70,7 @@ public class Packet {
     }
 
 
-    public short getlLength() {
+    public short getLength() {
         return this.length;
     }
 

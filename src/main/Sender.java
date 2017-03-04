@@ -58,7 +58,7 @@ public class Sender {
                     currentPacket.setCksum((short) 0);
                 }
                 System.out.println("[SENDing] packet " + currentPacket.getSeqno() + " to the server...");
-                DatagramPacket output = new DatagramPacket(currentPacket.getData(), currentPacket.getlLength(), ip, PORT);
+                DatagramPacket output = new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, PORT);
                 socket.send(output);
 
                 //this is where the ack is received
