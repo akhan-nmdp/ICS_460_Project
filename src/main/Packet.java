@@ -75,7 +75,7 @@ public class Packet {
     }
 
     public void setLength(short len) {
-        this.length = length;
+        this.length = len;
     }
 
     public int getAckno() {
