@@ -12,11 +12,11 @@ public class Writer {
 
 	}
 
-	public void writeToFile(String payloadString) throws IOException {
-		output = new FileOutputStream(new File("new_" + payloadString));
+	public void writeToFile(String packageString) throws IOException {
+		output = new FileOutputStream(new File("output_" + packageString));
 	}
 
-	public void writeToFile(byte[] payload) throws IOException {
-		output.write(payload);
+	public void writeToFile(byte[] packageByte) throws IOException {
+		output.write(packageByte);
 	}	
 }

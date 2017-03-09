@@ -32,9 +32,9 @@ public class Receiver {
 		Writer writer = new Writer();
 		DatagramSocket socket = new DatagramSocket(DEFAULT_PORT);
 		String seqNumber = "";
-		String payloadString = "";
+		String packageString = "";
 		Random random = new Random();
-		byte[] payload;
+		byte[] packageByte;
 		double corruption = 0;
 		int timeout = 1000;
 		int currentPacketNumber = 1;
@@ -43,9 +43,10 @@ public class Receiver {
 		int counter = 0;
 		byte[] data = new byte[1024];
 
-		System.out.println("What is the percentage of packets that should be corrupted during transmission of the data?");
+		System.out.println("Please enter the percentage of packet that should be corupputed while sending data:");
+		
 		corruption = inputs.nextInt();
-		System.out.println("What is the time it should take to resend a packet if it is lost?");
+		System.out.println("Please enter the time(ms) to resend the packet if lost:");
 		timeout = inputs.nextInt();
 
 		socket.setSoTimeout(timeout);
@@ -73,9 +74,9 @@ public class Receiver {
 				currentPacketNumber = Integer.parseInt(seqNumber);
 				System.out.println("Waiting for packet number " + currentPacketNumber + " from the client...");
 
-				payload = new byte[receivePacket.getLength() - 12];
-				for (int i = 0; i < payload.length; i++) {
-					payload[i] = data[i + 12];
+				packageByte = new byte[receivePacket.getLength() - 12];
+				for (int i = 0; i < packageByte.length; i++) {
+					packageByte[i] = data[i + 12];
 				}
 				
 				if(cksumValue == 0) {
@@ -85,14 +86,14 @@ public class Receiver {
 
 					if (currentPacketNumber == 1) {
 						
-						if(!payloadString.equals(new String(payload, "UTF-8"))) {
-							payloadString = new String(payload, "UTF-8");
-							writer.writeToFile(payloadString);
+						if(!packageString.equals(new String(packageByte, "UTF-8"))) {
+							packageString = new String(packageByte, "UTF-8");
+							writer.writeToFile(packageString);
 						}
 					} else {
-						if(!payloadString.equals(new String(payload, "UTF-8"))) {
-							payloadString = new String(payload, "UTF-8");
-							writer.writeToFile(payload);
+						if(!packageString.equals(new String(packageByte, "UTF-8"))) {
+							packageString = new String(packageByte, "UTF-8");
+							writer.writeToFile(packageByte);
 						}
 					}
 
