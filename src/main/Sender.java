@@ -15,31 +15,34 @@ import java.util.Scanner;
  */
 public class Sender {
     
-    public final static int PORT= 7;
+    //public final static int PORT= 7;
     
     public static void main(String[] args) throws IOException{
         //create socket and set its timeout
         DatagramSocket socket = new DatagramSocket();
         socket.setSoTimeout(2000);
-        //Scanner inputData = new Scanner(System.in);
+        Scanner inputData = new Scanner(System.in);
         Random random = new Random();
         Packet currentPacket = null;
-        int packetSize;
+        int packetSize = 1;
         int corruption = 0;
         int timeout = 2000;
         int ackNumberValue = 1;
-        String ipAddress;
-        int port;
+        String ipAddress = null;
+        int port= 7;
         boolean resend = false;
-        
+        Packet droppedPacket= null;
+        int oldAckNumber= 0;
+        //new way to get data from command line
+        if (args.length > 0){
         packetSize= Integer.parseInt(args[0]);
         timeout= Integer.parseInt(args[1]);
         corruption= Integer.parseInt(args[2]);
         ipAddress= args[3];
         port= Integer.parseInt(args[4]);
-        
+        }
         //Gathering input from user
-        /*System.out.println("Please enter the ip address (ex: localhost):");
+/*        System.out.println("Please enter the ip address (ex: localhost):");
         ipAddress= inputData.next();
         System.out.println("Please enter the port number:");
         port=inputData.nextInt();
@@ -70,23 +73,45 @@ public class Sender {
 
                 //check the packet and set its checksum
                 currentPacket = packets.removeFirst();
-                if(random.nextInt(100) <= corruption) {
+                //by default the checksum will be good checksum of 0
+                currentPacket.setCksum(goodCheckSum);
+                //create a datagram packet and send it
+                //System.out.println("[SENDing] packet " + currentPacket.getSeqno());
+                //new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, port);
+               
+                //check and see if this is an error data packet
+               /* if(random.nextInt(100) <= corruption) {
                     currentPacket.setCksum(badCheckSum);
                 }
                 else {
                     currentPacket.setCksum(goodCheckSum);
-                }
-                //create a datagram packet and send it
-                //System.out.println("[SENDing] packet " + currentPacket.getSeqno());
-                //new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, port);
-                if (!resend) {
-                System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of "+ currentPacket.getData().length );            
-                } else {
-                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of "+ currentPacket.getData().length); 
-                }
+                }*/
+                
+                //check and see if we need to dop the packet
+                if (random.nextInt(10) == 1){
+                    System.out.println("[DROP] packet # " + currentPacket.getSeqno());
+                    droppedPacket= currentPacket;
+                    continue;//start from the while loop again
+                } else if (random.nextInt(10) == 2) {
+                    //this packet is bad packet 
+                    System.out.println("[ERRR] packet # "+ currentPacket.getSeqno());
+                    //check if we need to make this a good or bad packet
+                    currentPacket.setCksum(badCheckSum);
+                } else if (random.nextInt(10) == 3){
+                    for (int z= 0; z < 25; z++){
+                        //do nothing just need to delay
+                    }
+                    System.out.println("[DLYD] packet # "+ currentPacket.getSeqno());
+                } 
                 DatagramPacket output= new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, port);
                 //send the packet
                 socket.send(output);
+                //check which msg to send 
+                if (!resend) {
+                    System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length);
+                } else {
+                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length);
+                }
                 
                 long endTime= System.currentTimeMillis() - startTime;
                 //check whether Ack is sent from receiver
@@ -99,14 +124,16 @@ public class Sender {
                     checksum = checksum + dataFromReceiver[i];
                 }
                 checksumValue = Integer.parseInt(checksum);
-                //go thru packet from positin 4 to 7 to get the ackNumber
+                //go thru packet from position 4 to 7 to get the ackNumber
                 for(int i = 4; i < 8; i++) {
                     ackNumber = ackNumber + dataFromReceiver[i];
                 }
                 ackNumberValue = Integer.parseInt(ackNumber);
                 
-                //if checksum came back as 0 from receiver then ack the packet
+                //if checksum came back as 0 from receiver then ack the packet                
                 if(checksumValue == 0) {
+                    if (oldAckNumber == ackNumberValue)
+                        System.out.println("[DuplAck] for packet # "+ ackNumberValue+ "\n");
                     System.out.println("[AckRcvd] for packet # "+ ackNumberValue+ "\n");
                 }
                 else {
@@ -116,11 +143,11 @@ public class Sender {
                     resend= true;
                     packets.addFirst(currentPacket);
                 }
+                oldAckNumber= ackNumberValue;
                 
             } catch (SocketTimeoutException ste) {
-                //If we lost the packet during transmission--resend
-//                System.out.println("[TimeOut.]: packet "+ (ackNumberValue)+ " because [Ack] was lost.");
-                System.out.println("[TimeOut]: packet "+ currentPacket.getSeqno());
+                //If while waiting for ACK we timeout we need to resend this packet 
+                System.out.println("[TimeOut] while waiting to receieve ACK for packet # "+ currentPacket.getSeqno());
                 resend= true;
                 packets.addFirst(currentPacket);
             }
