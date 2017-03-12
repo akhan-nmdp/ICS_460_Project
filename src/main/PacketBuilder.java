@@ -62,39 +62,58 @@ public class PacketBuilder {
      * build the packet based on packent length
      * @param fileName
      * @param dataFromFile
-     * @param payload
+     * @param packetSize
      * @return
      */
-    private LinkedList<Packet> buildPackets(String fileName, String dataFromFile, int payload) {
+    private LinkedList<Packet> buildPackets(String fileName, String dataFromFile, int packetSize) {
+        //create list to store data and packets
         LinkedList<byte[]> dataList = new LinkedList<byte[]>();
         LinkedList<Packet> packetList = new LinkedList<Packet>();
+        //get the data in bytes
         byte[] fullData = dataFromFile.getBytes();
-        int remainder = fullData.length % payload;
-        int fullArraysNeeded = fullData.length / payload;
+        //do modulo and see what what data is left over and will not fill up the entire packet
+        int remainingData = fullData.length % packetSize;
+        //check how many packets can be filled up entirely with data
+        int fullPacketCount = fullData.length / packetSize;
         int packetNumber = 1;
         int location = 0;
-
-        Packet namePacket = new Packet((short) 0, (short) (12 + fileName.length()), packetNumber, packetNumber, fileName.getBytes());
+        short checkSum= 0;
+        int destinationStartIndex= 0;
+        //create the packet that has the name of the file 
+        Packet namePacket = new Packet(checkSum, (short) (12 + fileName.length()), packetNumber, packetNumber, fileName.getBytes());
+        //increment packet number
         packetNumber++;
+        //add packet to list
         packetList.add(namePacket);
-
-        for(int i = 0; i < fullArraysNeeded; i++) {
-            byte[] newD = new byte[payload];
-            System.arraycopy(fullData, payload * i, newD, 0, newD.length);
-            dataList.add(newD);
-            location = payload * (i + 1);
+        //go thru all the data that needs to be sent to receiver 
+        for(int i = 0; i < fullPacketCount; i++) {
+            //create a new byte[] to store the data in chunks of packetSize
+            byte[] destination = new byte[packetSize];
+            //copy the full data in chunks of packetSize into a new destination
+            System.arraycopy(fullData, packetSize * i, destination, destinationStartIndex, destination.length);
+            //adding the chunked data to list
+            dataList.add(destination);
+            //keeping track of the position of when we stopped copying
+            location = packetSize * (i + 1);
         }
-
-        if(remainder != 0) {
-            byte[] newD2 = new byte[remainder];
-            System.arraycopy(fullData, location, newD2, 0, newD2.length);
-            dataList.add(newD2);
+        //if there are still some data remaining from full data copy it
+        if(remainingData != 0) {
+            //create byte[] to store the data that is remaining
+            byte[] otherDestination = new byte[remainingData];
+            //copy the data that is remaining from full data to destinaiton
+            System.arraycopy(fullData, location, otherDestination, destinationStartIndex, otherDestination.length);
+            //add remaining data with rest of the data list
+            dataList.add(otherDestination);
         }
-
+        //once i am done putting all packet to list 
         while(!dataList.isEmpty()) {
+            //remove the last packet
             byte[] data = dataList.remove();
-            Packet packet = new Packet((short) 0, (short) (12 + data.length), packetNumber, packetNumber, data);
+            //create packet object
+            Packet packet = new Packet(checkSum, (short) (12 + data.length), packetNumber, packetNumber, data);
+            //increment packet number
             packetNumber++;
+            //add packet to list
             packetList.add(packet);
         }
 
