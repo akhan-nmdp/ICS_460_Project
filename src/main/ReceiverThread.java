@@ -1,24 +1,15 @@
 package main;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Scanner;
+import java.net.*;
 
 public class ReceiverThread extends Thread {
 	private DatagramSocket socket;
-	private Writer writer;
+	// private Writer writer;
 	private volatile boolean stopped = false;
 
 	ReceiverThread(DatagramSocket socket) {
 		this.socket = socket;
-		writer = new Writer();
+		// writer = new Writer();
 	}
 
 	public void halt() {
@@ -28,8 +19,9 @@ public class ReceiverThread extends Thread {
 	@Override
 	public void run() {
 		byte[] buffer = new byte[1024];
-		while(true) {
-			if(stopped) return;
+		while (true) {
+			if (stopped)
+				return;
 			DatagramPacket dp;
 			try {
 				dp = new DatagramPacket(buffer, buffer.length);
@@ -39,7 +31,7 @@ public class ReceiverThread extends Thread {
 				Thread.yield();
 			} catch (SocketException e) {
 				e.printStackTrace();
-			} catch(Exception e1) { 
+			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
 		}
