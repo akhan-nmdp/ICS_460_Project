@@ -21,7 +21,7 @@ public class Sender {
         //create socket and set its timeout
         DatagramSocket socket = new DatagramSocket();
         socket.setSoTimeout(2000);
-        Scanner inputData = new Scanner(System.in);
+        //Scanner inputData = new Scanner(System.in);
         Random random = new Random();
         Packet currentPacket = null;
         int packetSize;
@@ -32,8 +32,14 @@ public class Sender {
         int port;
         boolean resend = false;
         
+        packetSize= Integer.parseInt(args[0]);
+        timeout= Integer.parseInt(args[1]);
+        corruption= Integer.parseInt(args[2]);
+        ipAddress= args[3];
+        port= Integer.parseInt(args[4]);
+        
         //Gathering input from user
-        System.out.println("Please enter the ip address (ex: localhost):");
+        /*System.out.println("Please enter the ip address (ex: localhost):");
         ipAddress= inputData.next();
         System.out.println("Please enter the port number:");
         port=inputData.nextInt();
@@ -42,10 +48,10 @@ public class Sender {
         System.out.println("Please enter the percentage of packet that should be corupputed while sending data:");
         corruption = inputData.nextInt();
         System.out.println("Please enter the time(in ms)to resend the packet: ");
-        timeout = inputData.nextInt();
+        timeout = inputData.nextInt();*/
         socket.setSoTimeout(timeout);
         //close the scanner after data is entered
-        inputData.close();
+        //inputData.close();
         
         InetAddress ip = InetAddress.getByName(ipAddress);
         PacketBuilder packetBuilder= new PacketBuilder();
