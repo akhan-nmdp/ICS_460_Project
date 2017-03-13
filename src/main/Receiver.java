@@ -84,9 +84,6 @@ public class Receiver {
 				// if corruption/2 is more than random number between 1-100,
 				// then data was lost
 				if (lost.nextInt(100) < (corruption / 2)) {
-					// if the receivepacket is null throw error [CRPT] packet
-					// sent (akhan)
-					System.out.println("\npacket is null.....\n");
 					receivePacket = null;
 				}
 				receiverSocket.receive(receivePacket);
@@ -105,6 +102,7 @@ public class Receiver {
 
 				System.out.println("Waiting on packet # " + currentPacketNumber + "...");
 
+				// if the cksumValue is not zero throw error [CRPT]
 				if (cksumValue != 0) {
 					System.out.println("packet # " + currentPacketNumber + " is [CRPT]");
 				}
