@@ -53,10 +53,10 @@ public class Sender {
         System.out.println("Please enter the percentage of packet that should be corupputed while sending data:");
         corruption = inputData.nextInt();
         System.out.println("Please enter the time(in ms)to resend the packet: ");
-        timeout = inputData.nextInt();*/
+        timeout = inputData.nextInt();
         socket.setSoTimeout(timeout);
         //close the scanner after data is entered
-//        inputData.close();
+        inputData.close();*/
         
         InetAddress ip = InetAddress.getByName(ipAddress);
         PacketBuilder packetBuilder= new PacketBuilder();
@@ -101,7 +101,7 @@ public class Sender {
                         // check if we need to make this a good or bad packet
                         currentPacket.setCksum(badCheckSum);
                     } else if (random.nextInt(10) == 3) {
-                        for (int z = 0; z < 25; z++) {
+                        for (int z = 0; z < timeout; z++) {
                             // do nothing just need to delay
                         }
                         System.out.println("[DLYD] packet # " + currentPacket.getSeqno());

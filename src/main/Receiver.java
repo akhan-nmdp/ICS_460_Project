@@ -43,15 +43,28 @@ public class Receiver {
 		int currentPacketNumber = 1;
 		int cksumValue = 0;
 		int ackNumber = 1;
-		int counter = 0;
+		//int counter = 0;
 		byte[] data = new byte[1024];
 		int oldPacketNumber = 0;
+		int prevPacketNumber= 0;
+		int expectedPacketNumber= 1;
 		int port = DEFAULT_PORT;
 
 		// way to get data from command line
-		corruption = Integer.parseInt(args[0]);
-		hostname = args[1];
-		port = Integer.parseInt(args[2]);
+        if (args.length > 0) {
+            corruption = Integer.parseInt(args[0]);
+            hostname = args[1];
+            port = Integer.parseInt(args[2]);
+        }
+		 /*Scanner inputData = new Scanner(System.in);
+		 System.out.println("Please enter the ip address (ex: localhost):");
+	        hostname= inputData.next();
+	        System.out.println("Please enter the port number:");
+	        port=inputData.nextInt();
+	        System.out.println("Please enter the percentage of packet that should be corupputed while sending data:");
+	        corruption = inputData.nextInt();
+	        System.out.println("Please enter the time(in ms)to resend the packet: ");
+	        timeout = inputData.nextInt();*/
 
 		// create receiver's socket and set the default port
 		DatagramSocket receiverSocket = new DatagramSocket(port);
@@ -80,14 +93,15 @@ public class Receiver {
 				// packet received from sender
 				DatagramPacket receivePacket = new DatagramPacket(data, data.length);
 
-				Random lost = new Random();
+				//Random lost = new Random();
 				// if corruption/2 is more than random number between 1-100,
 				// then data was lost
-				if (lost.nextInt(100) < (corruption / 2)) {
+				/*if (lost.nextInt(100) < (corruption / 2)) {
 					receivePacket = null;
-				}
+				}*/
+				
 				receiverSocket.receive(receivePacket);
-
+				
 				// get checksum value
 				for (int i = 0; i < 3; i++) {
 					cksum = cksum + data[i];
@@ -99,29 +113,60 @@ public class Receiver {
 					seqNumber = seqNumber + data[i];
 				}
 				currentPacketNumber = Integer.parseInt(seqNumber);
-
-				System.out.println("Waiting on packet # " + currentPacketNumber + "...");
-
-				// if the cksumValue is not zero throw error [CRPT]
-				if (cksumValue != 0) {
-					System.out.println("packet # " + currentPacketNumber + " is [CRPT]");
+				
+				//System.out.println("Waiting on packet # " + currentPacketNumber + "...");
+				//System.out.println("Waiting on packet # "+ oldPacketNumber );
+				System.out.println("Waiting on packet # "+ expectedPacketNumber);
+				
+				//check whether we have received packet before 
+				if (oldPacketNumber == currentPacketNumber) {
+				    System.out.println("Packet # " + currentPacketNumber + " is [DUPL]" + "\n");
+              } else {
+                  System.out.println("Packet # " + currentPacketNumber + " is [RECV] \n" );
+              }
+				//if the packet is not what we expecting exit out of loop
+				if (expectedPacketNumber != currentPacketNumber){
+				    System.out.println("[!Seq] Sender sent " +  currentPacketNumber + " when it should have sent "+ expectedPacketNumber);
+				    continue;//break out of the while loop
 				}
+				
+				// if the cksumValue is not zero packet is [CRPT] exit out
+				if (cksumValue != 0) {
+					System.out.println("packet # " + currentPacketNumber + " is [CRPT] need to recieve again");
+					continue;//break out of while loop
+				}
+				
+				if (corruption > 0) {
+                    if (random.nextInt(10) == 5) {
+                        System.out.println("[DROP] packet # " + currentPacketNumber);
+                        //droppedPacket = currentPacket;
+                        continue;// start from the while loop again
+                    } 
+				}
+                    //this condition is not needed as receiever doesnt need to send negative ACK
+//                    else if (random.nextInt(10) == 6) {
+//                        // this packet is bad packet
+//                        System.out.println("[ERRR] packet # " + currentPacketNumber);
+//                        // check if we need to make this a good or bad packet
+//                        //currentPacket.setCksum(badCheckSum);
+//                        continue;//break out of while loop
+//                    } 
 
 				packageByte = new byte[receivePacket.getLength() - 12];
 				for (int i = 0; i < packageByte.length; i++) {
 					packageByte[i] = data[i + 12];
 				}
 
-				// if checksum value equals zero, then there are no data corruption and send acknowledgement
+				// if checksum value equals zero and no error occurred above proceed with creating 
 				if (cksumValue == 0) {
-					// check the packetnuber and see if it equals the old packet number. if the old and current packet number mathc then print dupl msg (akhan)
-					if (oldPacketNumber == currentPacketNumber) {
-						System.out.println("Packet # " + currentPacketNumber + " is [DUPL]");
-					} else {
-						System.out.println("Packet # " + currentPacketNumber + " is [RECV]\n" + "[SENDing]: [ACK] "
-								+ currentPacketNumber + "...");
-					}
-					counter--;
+//					if (oldPacketNumber == currentPacketNumber || ) {
+//	                      System.out.println("Packet # " + currentPacketNumber + " is [RECV] \n" );
+//					} else {
+//					    System.out.println("Packet # " + currentPacketNumber + " is [DUPL]" + "\n");
+//						//+ "[SENDing]: [ACK] ");
+//								//+ currentPacketNumber + "...");
+//					}
+					//counter--;
 					ackNumber = currentPacketNumber;
 
 					// write the data in the new file
@@ -142,29 +187,42 @@ public class Receiver {
 					Packet ackPacket = new Packet((short) 0, (short) 8, ackNumber);
 
 					// if random number between 1-100 is less or equal to corruption number, then set checksum value is 1 else 0
-					if (random.nextInt(100) <= corruption) {
-						// if the above condition is true then print out the [drop] msg for ack (akhan)
-						System.out.println("[ACK] # " + currentPacketNumber + " is [DROP]");
-						ackPacket.setCksum((short) 1);
-					} else {
+//					if (random.nextInt(100) <= corruption) {
+//						// if the above condition is true then print out the [drop] msg for ack (akhan)
+//						System.out.println("[ACK] # " + currentPacketNumber + " is [DROP]");
+//						ackPacket.setCksum((short) 1);
+//					} else {
 						// otherwise print you are preaprig an ack
-						System.out.println("Preparing an ack...");
-						ackPacket.setCksum((short) 0);
-					}
-
-					// check to see if checksum== 0 then print the [sent] ack msg (akhan)
-					if (ackPacket.getCksum() == 0) {
-						System.out.println("[ACK][SENT]\n");
-					}
-					// else print out the [err] ack msg (akhan)
-					else {
-						System.out.println("[ErrAck]\n");
-					}
+						//System.out.println("Preparing an [ACK] for packet number "+ ackNumber);
+						//ackPacket.setCksum((short) 0);
+					//}
+					//randomly drop ACK packets and start over or re
+                    if (corruption > 0) {
+                        if (random.nextInt(10) == 7) {
+                            System.out.println("[DROP] ACK for packet number "+ ackNumber + "\n");
+                            continue;//break out of while loop
+                        } else if (random.nextInt(10) == 8){
+                            System.out.println("[ERRR] ACK for packet number "+ ackNumber + "\n");
+                            ackPacket.setCksum((short) 1);
+                        }
+                    }
+					
 					// send acknowledgement to the sender
 					DatagramPacket ack = new DatagramPacket(ackPacket.getData(), ackPacket.getLength(),
 							receivePacket.getAddress(), receivePacket.getPort());
 					receiverSocket.send(ack);
 					oldPacketNumber = currentPacketNumber;
+					//check which packet we need to expect next
+                    if (ackPacket.getCksum() == 0) {
+                        // increase the packetnumber once ack was sent
+                        expectedPacketNumber++;
+                        System.out.println("[ACK] [SENT] for packet number " + ackNumber + "\n" + " next packet # should be " + (ackNumber + 1) + "\n");
+                    } else {
+                        // otherwise if there was an ErrAck sent we still are
+                        // expecting the same packet
+                        expectedPacketNumber = ackNumber;
+                        System.out.println("[ERRR] ACK occurred need to receieve packet # " + expectedPacketNumber + "\n");
+                    }
 				}
 
 				// if checksum value not equal zero, current packet is corrupted and waits for re-send
