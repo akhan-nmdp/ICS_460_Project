@@ -56,7 +56,7 @@ public class Receiver {
             hostname = args[1];
             port = Integer.parseInt(args[2]);
         }
-		 /*Scanner inputData = new Scanner(System.in);
+		/* Scanner inputData = new Scanner(System.in);
 		 System.out.println("Please enter the ip address (ex: localhost):");
 	        hostname= inputData.next();
 	        System.out.println("Please enter the port number:");
@@ -119,10 +119,10 @@ public class Receiver {
 				System.out.println("Waiting on packet # "+ expectedPacketNumber);
 				
 				//check whether we have received packet before 
-				if (oldPacketNumber == currentPacketNumber) {
-				    System.out.println("Packet # " + currentPacketNumber + " is [DUPL]" + "\n");
+				if (oldPacketNumber != currentPacketNumber) {
+				    System.out.println("Packet # " + currentPacketNumber + " is [RECV] \n" );
               } else {
-                  System.out.println("Packet # " + currentPacketNumber + " is [RECV] \n" );
+                  System.out.println("Packet # " + currentPacketNumber + " is [DUPL]" + "\n");
               }
 				//if the packet is not what we expecting exit out of loop
 				if (expectedPacketNumber != currentPacketNumber){
@@ -133,12 +133,14 @@ public class Receiver {
 				// if the cksumValue is not zero packet is [CRPT] exit out
 				if (cksumValue != 0) {
 					System.out.println("packet # " + currentPacketNumber + " is [CRPT] need to recieve again");
+					oldPacketNumber= currentPacketNumber;
 					continue;//break out of while loop
 				}
 				
 				if (corruption > 0) {
                     if (random.nextInt(10) == 5) {
                         System.out.println("[DROP] packet # " + currentPacketNumber);
+                        oldPacketNumber= currentPacketNumber;
                         //droppedPacket = currentPacket;
                         continue;// start from the while loop again
                     } 
@@ -196,33 +198,37 @@ public class Receiver {
 						//System.out.println("Preparing an [ACK] for packet number "+ ackNumber);
 						//ackPacket.setCksum((short) 0);
 					//}
-					//randomly drop ACK packets and start over or re
+					//randomly drop ACK packets and start over
                     if (corruption > 0) {
                         if (random.nextInt(10) == 7) {
                             System.out.println("[DROP] ACK for packet number "+ ackNumber + "\n");
+                            oldPacketNumber= ackNumber;
                             continue;//break out of while loop
-                        } else if (random.nextInt(10) == 8){
+                        } 
+                       /* else if (random.nextInt(10) == 8){
                             System.out.println("[ERRR] ACK for packet number "+ ackNumber + "\n");
                             ackPacket.setCksum((short) 1);
-                        }
+                        }*/
                     }
 					
 					// send acknowledgement to the sender
 					DatagramPacket ack = new DatagramPacket(ackPacket.getData(), ackPacket.getLength(),
 							receivePacket.getAddress(), receivePacket.getPort());
 					receiverSocket.send(ack);
-					oldPacketNumber = currentPacketNumber;
+					//assign oldpacketNumber to the packet that was just acked
+					oldPacketNumber = ackNumber;
 					//check which packet we need to expect next
                     if (ackPacket.getCksum() == 0) {
                         // increase the packetnumber once ack was sent
                         expectedPacketNumber++;
                         System.out.println("[ACK] [SENT] for packet number " + ackNumber + "\n" + " next packet # should be " + (ackNumber + 1) + "\n");
-                    } else {
+                    } 
+                    /*else { NO NEED TO SENDING NEGATIVE ACK
                         // otherwise if there was an ErrAck sent we still are
                         // expecting the same packet
                         expectedPacketNumber = ackNumber;
                         System.out.println("[ERRR] ACK occurred need to receieve packet # " + expectedPacketNumber + "\n");
-                    }
+                    }*/
 				}
 
 				// if checksum value not equal zero, current packet is corrupted and waits for re-send
