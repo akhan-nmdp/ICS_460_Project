@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.util.LinkedList;
 import java.util.Random;
-import java.util.Scanner;
 /**
  * This class builds packet sends to receiver and waits for acknowledgement
  *
@@ -32,27 +31,13 @@ public class Sender {
         Integer delayedPacketNumber= 0;
         Integer prevPacketNumber= 0;
         // get data from command line
-       /* if (args.length > 0){
+        if (args.length > 0){
         packetSize= Integer.parseInt(args[0]);
         timeout= Integer.parseInt(args[1]);
         corruption= Integer.parseInt(args[2]);
         ipAddress= args[3];
         port= Integer.parseInt(args[4]);
-        }*/
-        
-        Scanner inputData = new Scanner(System.in);
-         System.out.println("Please enter the ip address (ex: localhost):");
-        ipAddress= inputData.next();
-        System.out.println("Please enter the port number:");
-        port=inputData.nextInt();
-        System.out.println("Please enter a packet size greater than 0:");
-        packetSize = inputData.nextInt();
-        System.out.println("Please enter the percentage of packet that should be corupputed while sending data:");
-        corruption = inputData.nextInt();
-        System.out.println("Please enter the time(in ms)to resend the packet: ");
-        timeout = inputData.nextInt();
-        //close the scanner after data is entered
-        inputData.close();
+        }
         
         //set the timeout value and ip
         socket.setSoTimeout(timeout);
