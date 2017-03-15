@@ -119,12 +119,12 @@ public class Sender {
                 //check which msg to send 
                 if (prevPacketNumber.equals(currentPacket.getSeqno()) && !delayedPacketNumber.equals(currentPacket.getSeqno())) {
                     //only need to do [RESEND] when packet was not a delayedPacket and was sent fine but no ack was received.  
-                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
+                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + " -----> \n");
                 } else {
                     long endTime= System.currentTimeMillis() - startTime;
                     //otherwise for delayedPackets and normalPackets print SENT
                     System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
-                    System.out.println("[SENT] packet # "+ currentPacket.getSeqno() + " in "+ endTime + " ms" + "\n");
+                    System.out.println("[SENT] packet # "+ currentPacket.getSeqno() + " in "+ endTime + " ms ----->" + "\n");
                 }
                 
 
@@ -151,7 +151,7 @@ public class Sender {
                     if (prevAckNumber.equals(ackNumberValue)) {
                         System.out.println("[DuplAck] for packet # " + ackNumberValue + "\n");
                     } else {
-                        System.out.println("[AckRcvd] for packet # " + ackNumberValue + "\n \n");
+                        System.out.println("[AckRcvd] for packet # " + ackNumberValue + "\n"+ "\n");
                         // turn off duplAck msg
                         //duplAck = false;
                     }

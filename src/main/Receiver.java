@@ -125,21 +125,21 @@ public class Receiver {
                   System.out.println("Packet # " + currentPacketNumber + " is [DUPL]" + "\n");
               }
 				//if the packet is not what we expecting exit out of loop
-				if (expectedPacketNumber != currentPacketNumber){
+				/*if (expectedPacketNumber != currentPacketNumber){
 				    System.out.println("[!Seq] Sender sent " +  currentPacketNumber + " when it should have sent "+ expectedPacketNumber);
 				    continue;//break out of the while loop
-				}
+				}*/
 				
 				// if the cksumValue is not zero packet is [CRPT] exit out
 				if (cksumValue != 0) {
-					System.out.println("packet # " + currentPacketNumber + " is [CRPT] need to recieve again");
+					System.out.println("packet # " + currentPacketNumber + " is [CRPT] need to recieve again" + "\n");
 					oldPacketNumber= currentPacketNumber;
 					continue;//break out of while loop
 				}
 				
 				if (corruption > 0) {
                     if (random.nextInt(10) == 5) {
-                        System.out.println("[DROP] packet # " + currentPacketNumber);
+                        System.out.println("[DROP] packet # " + currentPacketNumber + "\n");
                         oldPacketNumber= currentPacketNumber;
                         //droppedPacket = currentPacket;
                         continue;// start from the while loop again
@@ -221,7 +221,7 @@ public class Receiver {
                     if (ackPacket.getCksum() == 0) {
                         // increase the packetnumber once ack was sent
                         expectedPacketNumber++;
-                        System.out.println("[ACK] [SENT] for packet number " + ackNumber + "\n" + " next packet # should be " + (ackNumber + 1) + "\n");
+                        System.out.println("[ACK] [SENT] for packet number " + ackNumber + "\n" + " next packet # should be " + (ackNumber + 1) + "\n"+ "\n");
                     } 
                     /*else { NO NEED TO SENDING NEGATIVE ACK
                         // otherwise if there was an ErrAck sent we still are
