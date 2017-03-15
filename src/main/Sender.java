@@ -98,11 +98,11 @@ public class Sender {
                     } */
                     if (random.nextInt(5) == 2) {
                         // this packet is bad packet
-                        System.out.println("[ERRR] packet # " + currentPacket.getSeqno()+ " is bad packet");
+                        System.out.println("[ERRR] packet # " + currentPacket.getSeqno()+ " is bad packet \n");
                         // check if we need to make this a good or bad packet
                         currentPacket.setCksum(badCheckSum);
                     } else if (random.nextInt(5) == 3) {
-                        System.out.println("[DLYD] packet # " + currentPacket.getSeqno());
+                        System.out.println("[DLYD] packet # " + currentPacket.getSeqno()+ "\n");
                         for (int z = 0; z <= timeout; z++) {
                             //do nothing just wait
                         }
@@ -119,16 +119,17 @@ public class Sender {
                 //check which msg to send 
                 if (prevPacketNumber.equals(currentPacket.getSeqno()) && !delayedPacketNumber.equals(currentPacket.getSeqno())) {
                     //only need to do [RESEND] when packet was not a delayedPacket and was sent fine but no ack was received.  
-                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length);
+                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
                 } else {
+                    long endTime= System.currentTimeMillis() - startTime;
                     //otherwise for delayedPackets and normalPackets print SENT
-                    System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length);
-                    System.out.println("[SENT] packet # "+ currentPacket.getSeqno());
+                    System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
+                    System.out.println("[SENT] packet # "+ currentPacket.getSeqno() + " in "+ endTime + " ms" + "\n");
                 }
                 
-                long endTime= System.currentTimeMillis() - startTime;
+
                 //check whether Ack is sent from receiver
-                System.out.println("Waiting for the [Ack] for packet # " + currentPacket.getSeqno() + " which was send in "+ endTime + " ms");
+                System.out.println("Waiting for the [Ack] for packet # " + currentPacket.getSeqno() + "\n");
                 byte[] dataFromReceiver = new byte[1024];
                 DatagramPacket receiverPacket = new DatagramPacket(dataFromReceiver, dataFromReceiver.length);
                 socket.receive(receiverPacket);
@@ -150,7 +151,7 @@ public class Sender {
                     if (prevAckNumber.equals(ackNumberValue)) {
                         System.out.println("[DuplAck] for packet # " + ackNumberValue + "\n");
                     } else {
-                        System.out.println("[AckRcvd] for packet # " + ackNumberValue + "\n");
+                        System.out.println("[AckRcvd] for packet # " + ackNumberValue + "\n \n");
                         // turn off duplAck msg
                         //duplAck = false;
                     }
@@ -172,7 +173,7 @@ public class Sender {
                 
             } catch (SocketTimeoutException ste) {
                 //If while waiting for ACK we timeout we need to resend this packet 
-                System.out.println("[TimeOut] while waiting to receieve ACK for packet # "+ currentPacket.getSeqno());
+                System.out.println("[TimeOut] while waiting to receieve ACK for packet # "+ currentPacket.getSeqno()+ " \n");
                 //resend= true;
                 prevPacketNumber= currentPacket.getSeqno();
                 packets.addFirst(currentPacket);
