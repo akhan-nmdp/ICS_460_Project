@@ -118,6 +118,21 @@ public class Sender {
                 }
                 ackNumberValue = Integer.parseInt(ackNumber);
                 
+                //randomly drop the Ack that was sent to by receiver, test out maybe need to remove for project 1?????
+                if (corruption > 0){
+                    //randomly [DROP] the Ack
+                    if (random.nextInt(5) == 4) {
+                        System.out.println("[DROP] Ack for packet # " + ackNumberValue + "\n");
+                        //note down the ackNumber that was dropped
+                        prevAckNumber= ackNumberValue;
+                        //add this packet in front as it need to be resent
+                        if (ackNumberValue == currentPacket.getSeqno()) {
+                            packets.addFirst(currentPacket);
+                            continue; //start from while loop again
+                        }
+                    }//end of  if (random.nextInt(5) == 4)
+                }//end of if (corruption > 0)
+                
                 // if checksum came back as 0 from receiver then ack the packet
                 if (checksumValue == 0) {
                     //if ack was received for this packet before then this is a Dupl Ack
