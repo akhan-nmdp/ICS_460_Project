@@ -3,6 +3,7 @@ package main;
 import java.io.*;
 import java.net.*;
 import java.util.Random;
+import java.util.Scanner;
 /**
  * This class receives packet from sender and acknowledges the packet
  *
@@ -42,11 +43,22 @@ public class Receiver {
 		String hostname = "localhost";
 
 		//get data from command line
-		if (args.length > 0) {
+		/*if (args.length > 0) {
 			corruption = Integer.parseInt(args[0]);
 			hostname = args[1];
 			port = Integer.parseInt(args[2]);
-		}
+		}*/
+		
+		 Scanner inputData = new Scanner(System.in);
+		 System.out.println("Please enter the ip address (ex: localhost):");
+           hostname= inputData.next();
+           System.out.println("Please enter the port number:");
+           port=inputData.nextInt();
+           System.out.println("Please enter the percentage of packet that should be corupputed while sending data:");
+           corruption = inputData.nextInt();
+           System.out.println("Please enter the time(in ms)to resend the packet: ");
+           timeout = inputData.nextInt();
+		
 		//create the ip
 		InetAddress ip = InetAddress.getByName(hostname);
 		// create receiver's socket
@@ -77,7 +89,7 @@ public class Receiver {
 				//convert seq into a number
 				currentPacketNumber = Integer.parseInt(seqNumber);
 				//print out what packet is coming
-				System.out.println("Waiting on packet # " + expectedPacketNumber);
+				System.out.println("Waiting on packet # " + expectedPacketNumber+ "\n");
 
 				// check whether we have received packet before
 				if (oldPacketNumber != currentPacketNumber) {
@@ -158,9 +170,9 @@ public class Receiver {
 					// check which packet we need to expect next
 					if (ackPacket.getCksum() == 0) {
 						// increase the packetNumber once ack was sent
-						expectedPacketNumber++;
+						expectedPacketNumber= ackNumber + 1;
 						System.out.println("[ACK] [SENT] for packet number " + ackNumber + "\n"
-								+ " next packet # should be " + (ackNumber + 1) + " <-----"  + "\n" + "\n");
+								+ "next packet # should be " + (ackNumber + 1) + " <-----"  + "\n" + "\n");
 					}
 				}//end of if (cksumValue == 0)
 
