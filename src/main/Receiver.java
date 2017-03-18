@@ -3,6 +3,9 @@ package main;
 import java.io.*;
 import java.net.*;
 import java.util.Random;
+
+import receiver.thread.ReceiverThread;
+import receiver.thread.SenderThread;
 /**
  * This class receives packet from sender and acknowledges the packet
  *
@@ -61,8 +64,13 @@ public class Receiver {
 				String cksum = "";
 				seqNumber = "";
 				// packet received from sender
-				DatagramPacket receivePacket = new DatagramPacket(data, data.length);
-				receiverSocket.receive(receivePacket);
+				//move below code into a separate class called recieverThread
+				//DatagramPacket receivePacket = new DatagramPacket(data, data.length);
+				//receiverSocket.receive(receivePacket);
+				ReceiverThread receiverThread= new ReceiverThread(receiverSocket, data);
+				Thread thread= new Thread(receiverThread);
+				thread.start();
+				DatagramPacket receivePacket= receiverThread.getReceivePacket();
 
 				// parse the data to get checksum 
 				for (int i = 0; i < 3; i++) {
@@ -137,6 +145,10 @@ public class Receiver {
 						}
 					}
 
+					SenderThread senderThread= new SenderThread(ackNumber, receivePacket, receiverSocket);
+					Thread thread2= new Thread(senderThread);
+					thread2.start();
+					
 					// create acknowledgement packet
 					Packet ackPacket = new Packet((short) 0, (short) 8, ackNumber);
 					//we need to randomly need to [DROP] ack packet
@@ -151,6 +163,7 @@ public class Receiver {
 					}
 
 					// send acknowledgement to the sender
+					//move below code into separate senderThread
 					DatagramPacket ack = new DatagramPacket(ackPacket.getData(), ackPacket.getLength(),
 							receivePacket.getAddress(), receivePacket.getPort());
 					receiverSocket.send(ack);
