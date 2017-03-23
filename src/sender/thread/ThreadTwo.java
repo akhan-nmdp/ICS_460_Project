@@ -26,6 +26,13 @@ public class ThreadTwo implements Runnable {
         this.threadOne = threadOne;
     }
 
+    public ThreadTwo(DatagramSocket socket2, int corruption2, LinkedList<Packet> packets2, ThreadOne threadOne2) {
+        this.socket = socket2;
+        this.corruption = corruption2;
+        this.packets = packets2;
+        this.threadOne = threadOne2;
+    }
+
     @Override
     public void run() {
         String checksum= "";
@@ -34,10 +41,12 @@ public class ThreadTwo implements Runnable {
         int ackNumberValue;
         Integer prevAckNumber = 0;
         Integer prevPacketNumber= 0;
+        Packet currentPacket= null;
         
         Random random= new Random();
         while(true){
-         try {       
+         try {
+             currentPacket= threadOne.getCurrentPacket();
         //wait for Ack from receiver
         System.out.println("Waiting for [Ack] for packet # " + currentPacket.getSeqno() + "\n");
         //get the datagramPacket from receiver

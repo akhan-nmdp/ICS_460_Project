@@ -12,7 +12,6 @@ import main.Packet;
 
 public class ThreadOne implements Runnable {
 
-    private Packet currentPacket;
     private LinkedList<Packet> packets;
     private int corruption;
     private DatagramSocket socket;
@@ -22,6 +21,7 @@ public class ThreadOne implements Runnable {
     //track the packets
     private Integer previousPacketNumber;
     private Integer delayedPacketNumber;
+    private Packet currentPacket;
     
     public ThreadOne(Packet currentPacket, LinkedList<Packet> packets, int corruption, DatagramSocket socket, int timeout, InetAddress ip, int port) {
         super();
@@ -32,6 +32,16 @@ public class ThreadOne implements Runnable {
         this.timeout = timeout;
         this.ip= ip;
         this.port= port;
+    }
+
+
+    public ThreadOne(LinkedList<Packet> packets2, int corruption2, DatagramSocket socket2, int timeout2, InetAddress ip2, int port2) {
+        this.packets = packets2;
+        this.corruption = corruption2;
+        this.socket = socket2;
+        this.timeout = timeout2;
+        this.ip= ip2;
+        this.port= port2;
     }
 
 
@@ -54,6 +64,7 @@ public class ThreadOne implements Runnable {
         currentPacket = packets.removeFirst();
         //by default the checksum will be good checksum of 0
         currentPacket.setCksum(goodCheckSum);
+        setCurrentPacket(currentPacket);
         
         //if user had specified packets to be corrupted, then packets 
         //will be error and delay
@@ -126,6 +137,16 @@ public class ThreadOne implements Runnable {
 
     public void setDelayedPacketNumber(Integer delayedPacketNumber) {
         this.delayedPacketNumber = delayedPacketNumber;
+    }
+
+
+    public Packet getCurrentPacket() {
+        return this.currentPacket;
+    }
+
+
+    public void setCurrentPacket(Packet currentPacket) {
+        this.currentPacket = currentPacket;
     }
 
 }

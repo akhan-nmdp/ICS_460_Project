@@ -71,11 +71,11 @@ public class SenderMain {
                 disconnect();
             }
             while (!packets.isEmpty()) {
-                Packet currentPacket = packets.removeFirst();
-                ThreadOne threadOne = new ThreadOne(currentPacket, packets, corruption, socket, timeout, ip, port);
+                //Packet currentPacket = packets.removeFirst();
+                ThreadOne threadOne = new ThreadOne(packets, corruption, socket, timeout, ip, port);
                 Thread threadS = new Thread(threadOne);
                 threadS.start();
-                ThreadTwo threadTwo= new ThreadTwo(socket, corruption, currentPacket, packets, threadOne);
+                ThreadTwo threadTwo= new ThreadTwo(socket, corruption, packets, threadOne);
                 Thread threadR= new Thread(threadTwo);
                 threadR.start();
             }
