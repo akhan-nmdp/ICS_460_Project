@@ -1,51 +1,99 @@
 package main;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.Scanner;
+
 /**
  * This class builds packet sends to receiver and waits for acknowledgement
  *
  */
-public class Sender {
+public class Sender implements Runnable{
+    
+    private int packetSize;
+    private int timeout;
+    private int windowSize;
+    private int corrupotion;
+    private int port;
+    private String ipAddress; 
+    
+    public Sender(int packetSize, int timeout, int windowSize, int corrupotion, int port, String ipAddress) {
+        super();
+        this.packetSize = packetSize;
+        this.timeout = timeout;
+        this.windowSize = windowSize;
+        this.corrupotion = corrupotion;
+        this.port = port;
+        this.ipAddress = ipAddress;
+    }
+
+    //public static void main(String[] args) throws IOException{
+    @Override
+    public void run(){
         
-    public static void main(String[] args) throws IOException{
-        //create socket
-        DatagramSocket socket = new DatagramSocket();
-        //object to generate random number
-        Random random = new Random();
         //variables to keep track of packet
         Packet currentPacket = null;
-        int packetSize = 1;
-        int corruption = 0;
-        int timeout = 2000;
+        int packetSize = getPacketSize();
+        int corruption = getCorrupotion();
+        int timeout = getCorrupotion();
         int ackNumberValue = 1;
-        String ipAddress = null;
-        int port= 7;
+        String ipAddress = getIpAddress();
+        int port= getPort();
         //variables to track of other ack and packets
         Integer prevAckNumber = 0;
         Integer delayedPacketNumber= 0;
         Integer prevPacketNumber= 0;
+        
+        //object to generate random number
+        Random random = new Random();
+                
+        InetAddress ip = null;
+        try {
+            ip = InetAddress.getByName(ipAddress);
+        } catch (UnknownHostException ex1) {
+            System.out.println("Invalid ipAddress entered!");
+            disconnect();//exit out of program
+        }
+        
         // get data from command line
-        if (args.length > 0){
+/*        if (args.length > 0){
         packetSize= Integer.parseInt(args[0]);
         timeout= Integer.parseInt(args[1]);
         corruption= Integer.parseInt(args[2]);
         ipAddress= args[3];
         port= Integer.parseInt(args[4]);
+        }*/
+        
+        DatagramSocket socket= null;
+        try {
+            //create socket
+            socket = new DatagramSocket(); 
+            socket.setSoTimeout(timeout);
+        } catch (SocketException ex1) {
+            System.out.println("Error occured while creating socket!");
+            disconnect();//exit out of program
+        }
+        //variable to store data in packets
+        LinkedList<Packet> packets= new LinkedList<Packet>();
+        
+        try {
+            //object to help build packet
+            PacketBuilder packetBuilder= new PacketBuilder();
+            //read data and put them in packets
+            packets = packetBuilder.readFile(packetSize);
+        } catch (FileNotFoundException ex1) {
+            System.out.println("Error while creating packets!");
+            disconnect();//exit out of program
         }
         
-        //set the timeout value and ip
-        socket.setSoTimeout(timeout);
-        InetAddress ip = InetAddress.getByName(ipAddress);
-        //object to help build packet
-        PacketBuilder packetBuilder= new PacketBuilder();
-        //read data and put them in packets
-        LinkedList<Packet> packets = packetBuilder.readFile(packetSize);
         //go thru all the packets while they exist
         while(!packets.isEmpty()) {
             try {
@@ -87,7 +135,12 @@ public class Sender {
                 //create datagram packet which will be sent to receiver
                 DatagramPacket output= new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, port);
                 //send the packet
-                socket.send(output);
+                try {
+                    socket.send(output);
+                } catch (IOException ex) {
+                    // TODO Auto-generated catch block
+                    ex.printStackTrace();
+                }
                 
                 //check which msg to print 
                 if (prevPacketNumber.equals(currentPacket.getSeqno()) && !delayedPacketNumber.equals(currentPacket.getSeqno())) {
@@ -106,7 +159,13 @@ public class Sender {
                 //get the datagramPacket from receiver
                 byte[] dataFromReceiver = new byte[1024];
                 DatagramPacket receiverPacket = new DatagramPacket(dataFromReceiver, dataFromReceiver.length);
-                socket.receive(receiverPacket);
+                try {
+                    socket.receive(receiverPacket);
+                } catch (IOException ex) {
+                    System.err.println("Closing socket as no more incoming packets!");
+                    socket.disconnect();
+                    disconnect();//exit out of program 
+                }
 
                 //go thru packet from position 0 to 2 to get the checksum
                 for(int i = 0; i < 3; i++) {
@@ -154,11 +213,95 @@ public class Sender {
                 prevPacketNumber= currentPacket.getSeqno();
                 //add this packet in front as it need to be resent
                 packets.addFirst(currentPacket);
-            }//end of catch
+            }//end of catch SocketTimeoutException
 
         }//end while
-        //disconnect socket
-        socket.disconnect();
+        //disconnect the socket
+        if (socket != null)
+            socket.disconnect();
+        //exit out of program
+        disconnect();
+    }
+    
+    public int getPacketSize() {
+        return this.packetSize;
+    }
+
+    public void setPacketSize(int packetSize) {
+        this.packetSize = packetSize;
+    }
+
+    public int getTimeout() {
+        return this.timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    public int getWindowSize() {
+        return this.windowSize;
+    }
+
+    public void setWindowSize(int windowSize) {
+        this.windowSize = windowSize;
+    }
+
+    public int getCorrupotion() {
+        return this.corrupotion;
+    }
+
+    public void setCorrupotion(int corrupotion) {
+        this.corrupotion = corrupotion;
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public String getIpAddress() {
+        return this.ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public void disconnect(){
+        System.exit(0);
+    }
+    public static void main(String args[]){      
+     // get data from command line
+//        if (args.length > 0){
+//        int packetSize= Integer.parseInt(args[0]);
+//        int timeout= Integer.parseInt(args[1]);
+//        int corruption= Integer.parseInt(args[2]);
+//        int windowSize= Integer.parseInt(args[3]);
+//        String ipAddress= args[4];
+//        int port= Integer.parseInt(args[5]);
+        Scanner inputs = new Scanner(System.in);
+        System.out.println("Please enter packetSize:");
+        int packSize= inputs.nextInt();
+        System.out.println("Please enter timeout:");
+        int timeout= inputs.nextInt();
+        System.out.println("Please enter corrutpion:");
+        int corruption= inputs.nextInt();
+        System.out.println("Please enter window size:");
+        int window= inputs.nextInt();
+//        System.out.println("Please enter ip adress:");
+//        String ip= inputs.nextLine();
+        System.out.println("Please enter port:");
+        int port= inputs.nextInt();        
+        
+        Sender sender=new Sender(packSize, timeout, window, corruption, port, "localhost");
+        Thread thread= new Thread(sender);
+        thread.start();
+//        }
+
     }
 
 }

@@ -3,6 +3,7 @@ package main;
 import java.io.*;
 import java.net.*;
 import java.util.Random;
+import java.util.Scanner;
 
 import receiver.thread.ReceiverThread;
 import receiver.thread.SenderThread;
@@ -10,26 +11,78 @@ import receiver.thread.SenderThread;
  * This class receives packet from sender and acknowledges the packet
  *
  */
-public class Receiver {
+public class Receiver implements Runnable {
     
 	// FileOutputStream for writeToFile method
-	static FileOutputStream output = null;
+	private FileOutputStream output = null;
+	private int windowSize;
+	private int corruption;
+	private String hostname;
+	private int port;
+	private int timeout;
 
-	public static void main(String[] args) throws IOException {
+    public Receiver(int windowSize, int corruption, String hostname, int port, int timeout) {
+        super();
+        this.windowSize = windowSize;
+        this.corruption = corruption;
+        this.hostname = hostname;
+        this.port = port;
+        this.timeout= timeout;
+    }
+
+    public int getWindowSize() {
+        return this.windowSize;
+    }
+
+    public void setWindowSize(int windowSize) {
+        this.windowSize = windowSize;
+    }
+
+    public int getCorruption() {
+        return this.corruption;
+    }
+
+    public void setCorruption(int corruption) {
+        this.corruption = corruption;
+    }
+
+    public String getHostname() {
+        return this.hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public int getTimeout() {
+        return this.timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    //public static void main(String[] args) throws IOException {
+	@Override
+	public void run(){
 
 		//object to generate random number
 		Random random = new Random();
-		//supported characte type 
+		//supported character type 
 		String characterSet= "UTF-8";
 		
 	    //variable to to store package properties
         String seqNumber = "";
         String packageString = "";
 		byte[] packageByte;
-		//variable to hold the corruption value
-		int corruption = 0;
-		//default timeout vaulue
-		int timeout = 2000;
 		//packet and ack number that will be used keep track of packets
 		int currentPacketNumber = 1;
 	    int ackNumber = 1;
@@ -41,22 +94,37 @@ public class Receiver {
 		int oldPacketNumber = 0;
 		int expectedPacketNumber = 1;
 		//default connection config
-		int port = 7;
-		String hostname = "localhost";
+		int port = getPort();
+		String hostname = getHostname();
+	    //variable to hold the corruption value
+        int corruption = getCorruption();
+        //default timeout vaulue
+        int timeout = getTimeout();
 
 		//get data from command line
-		if (args.length > 0) {
+/*		if (args.length > 0) {
 			corruption = Integer.parseInt(args[0]);
 			hostname = args[1];
 			port = Integer.parseInt(args[2]);
-		}
+		}*/
 		
 		//create the ip
-		InetAddress ip = InetAddress.getByName(hostname);
+		InetAddress ip= null;
+        try {
+            ip = InetAddress.getByName(hostname);
+        } catch (UnknownHostException ex) {
+            System.out.println("Invalid hostname!");
+            disconecct();//exit out of program
+        }
 		// create receiver's socket
-		DatagramSocket receiverSocket = new DatagramSocket(port, ip);
-		//set the timeout
-		receiverSocket.setSoTimeout(timeout);
+		DatagramSocket receiverSocket = null;
+		try {
+		    receiverSocket = new DatagramSocket(port, ip);
+            //set the timeout
+		    receiverSocket.setSoTimeout(timeout);
+        } catch (SocketException ex) {
+            System.out.println("");
+        }
 
 		while (true) {
 			try {
@@ -64,13 +132,12 @@ public class Receiver {
 				String cksum = "";
 				seqNumber = "";
 				// packet received from sender
-				//move below code into a separate class called recieverThread
-				//DatagramPacket receivePacket = new DatagramPacket(data, data.length);
-				//receiverSocket.receive(receivePacket);
-				ReceiverThread receiverThread= new ReceiverThread(receiverSocket, data);
-				Thread thread= new Thread(receiverThread);
-				thread.start();
-				DatagramPacket receivePacket= receiverThread.getReceivePacket();
+				DatagramPacket receivePacket = new DatagramPacket(data, data.length);
+				receiverSocket.receive(receivePacket);
+//				ReceiverThread receiverThread= new ReceiverThread(receiverSocket, data);
+//				Thread thread= new Thread(receiverThread);
+//				thread.start();
+//				DatagramPacket receivePacket= receiverThread.getReceivePacket();
 
 				// parse the data to get checksum 
 				for (int i = 0; i < 3; i++) {
@@ -145,9 +212,9 @@ public class Receiver {
 						}
 					}
 
-					SenderThread senderThread= new SenderThread(ackNumber, receivePacket, receiverSocket);
-					Thread thread2= new Thread(senderThread);
-					thread2.start();
+//					SenderThread senderThread= new SenderThread(ackNumber, receivePacket, receiverSocket);
+//					Thread thread2= new Thread(senderThread);
+//					thread2.start();
 					
 					// create acknowledgement packet
 					Packet ackPacket = new Packet((short) 0, (short) 8, ackNumber);
@@ -181,17 +248,24 @@ public class Receiver {
 			} catch (SocketTimeoutException | NullPointerException npe) {
 
 			} catch (SocketException se) {
-				System.exit(0);
-			}
+				System.out.println("Error "+ se);
+			    disconecct();
+			} catch (IOException ex) {
+                System.out.println("Error "+ ex);
+                disconecct();
+            }
 		}
 	}
 
+	public void disconecct(){
+	    System.exit(0);
+	}
 	/**
 	 * Write the name of file that was sent by sender to output file
 	 * @param packageString
 	 * @throws IOException
 	 */
-	public static void writeToFile(String packageString) throws IOException {
+	public void writeToFile(String packageString) throws IOException {
 		output = new FileOutputStream(new File("output_" + packageString));
 	}
 	/**
@@ -199,7 +273,38 @@ public class Receiver {
 	 * @param packageByte
 	 * @throws IOException
 	 */
-	public static void writeToFile(byte[] packageByte) throws IOException {
+	public void writeToFile(byte[] packageByte) throws IOException {
 		output.write(packageByte);
+	}
+	
+	public static void main(String args[]){
+	  //get data from command line
+//        if (args.length > 0) {
+//            int windowSize= Integer.parseInt(args[0]);
+//            int corruption = Integer.parseInt(args[1]);
+//            String hostname = args[2];
+//            int port = Integer.parseInt(args[3]);
+	    
+	    Scanner inputs = new Scanner(System.in);
+	  //Gathering program inputs
+        System.out.println("Please enter window");
+        //window = 5;
+        int window = inputs.nextInt();
+        System.out.println("Please enter corruption:");
+        //corruption = 20;
+        int corruption = inputs.nextInt();
+        //System.out.println("Please enter hostanme");
+        //packetSize = 10;
+        //String hostname = inputs.nextLine();
+        System.out.println("Please enter port");
+        //timeout = 2000;
+        int port = inputs.nextInt();
+        inputs.close();
+	    
+	    Receiver receiver= new Receiver(window, corruption, "localhost", port, 2000);
+	    Thread thread= new Thread(receiver);
+	    thread.start();
+	    
+//        }
 	}
 }
