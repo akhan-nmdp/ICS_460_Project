@@ -71,6 +71,8 @@ public class ThreadTwo implements Runnable {
         }
         ackNumberValue = Integer.parseInt(ackNumber);
         
+        System.out.println(" Going to prepare ack for packet "+ ackNumberValue);
+        
         //randomly drop the Ack that was sent to by receiver, test out maybe need to remove for project 1?????
         if (corruption > 0){
             //randomly [DROP] the Ack

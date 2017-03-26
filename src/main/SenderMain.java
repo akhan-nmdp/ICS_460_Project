@@ -72,11 +72,11 @@ public class SenderMain {
             }
             while (!packets.isEmpty()) {
                 //Packet currentPacket = packets.removeFirst();
-                LinkedList<Packet> packetsInTransit= choosePackets(windowSize, packets);
-                ThreadOne threadOne = new ThreadOne(packetsInTransit, corruption, socket, timeout, ip, port);
+                //LinkedList<Packet> packetsInTransit= choosePackets(windowSize, packets);
+                ThreadOne threadOne = new ThreadOne(packets, windowSize, corruption, socket, timeout, ip, port);
                 Thread threadS = new Thread(threadOne);
                 threadS.start();
-                ThreadTwo threadTwo= new ThreadTwo(socket, corruption, packetsInTransit, threadOne);
+                ThreadTwo threadTwo= new ThreadTwo(socket, corruption, packets, threadOne);
                 Thread threadR= new Thread(threadTwo);
                 threadR.start();
             }

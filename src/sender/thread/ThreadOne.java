@@ -18,6 +18,7 @@ public class ThreadOne implements Runnable {
     private int timeout;
     private InetAddress ip;
     private int port;
+    private int windowSize;
     //track the packets
     private Integer previousPacketNumber;
     private Integer delayedPacketNumber;
@@ -35,13 +36,14 @@ public class ThreadOne implements Runnable {
     }
 
 
-    public ThreadOne(LinkedList<Packet> packets2, int corruption2, DatagramSocket socket2, int timeout2, InetAddress ip2, int port2) {
+    public ThreadOne(LinkedList<Packet> packets2, int windowSize, int corruption2, DatagramSocket socket2, int timeout2, InetAddress ip2, int port2) {
         this.packets = packets2;
         this.corruption = corruption2;
         this.socket = socket2;
         this.timeout = timeout2;
         this.ip= ip2;
         this.port= port2;
+        this.windowSize= windowSize;
     }
 
 
@@ -61,7 +63,11 @@ public class ThreadOne implements Runnable {
         Random random= new Random();
         try {
         //check the packet and set its checksum
-        currentPacket = packets.removeFirst();
+        //currentPacket = packets.removeFirst();
+            //get the packet to send based on window size
+            LinkedList<Packet> packetsInTransit= choosePackets(windowSize, packets);
+            //get the packet that needs to be sent
+            currentPacket= packetsInTransit.removeFirst();
         //by default the checksum will be good checksum of 0
         currentPacket.setCksum(goodCheckSum);
         
@@ -119,6 +125,18 @@ public class ThreadOne implements Runnable {
             packets.addFirst(currentPacket);
         }
     } 
+    
+    private LinkedList<Packet> choosePackets(int windowSize, LinkedList<Packet> allPreparedPackets){
+        LinkedList<Packet> packetToSend= new LinkedList<Packet>();
+        if (windowSize > 1){
+            for ( int i = 0; i < windowSize; i++){
+                packetToSend.add(allPreparedPackets.removeFirst());
+            }
+        }else {
+            packetToSend.add(allPreparedPackets.removeFirst());
+        }
+        return packetToSend;
+    }
     
     public Integer getPreviousPacketNumber() {
         return this.previousPacketNumber;

@@ -86,7 +86,7 @@ public class ThreadThree implements Runnable {
     }
 
     public synchronized void setPacket(DatagramPacket packet) {
-        notifyAll();
+        notify();
         this.packet = packet;
     }
 
