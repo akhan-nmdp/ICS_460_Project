@@ -86,11 +86,14 @@ public class ThreadFour implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
-            if (checksumValue == 0) {
+        System.out.println("ThreadThree has received packet "+ threadThree.getPacket());
+        while (threadThree.getPacket() != null) {
+            if (threadThree.getChecksumValue() == 0) {
+                System.out.println("Getting ackNumber "+threadThree.getAckNumber()+" from ThreadThree ");
+                int ackNum= threadThree.getAckNumber();
                 Random random = new Random();
                 // create acknowledgement packet
-                Packet ackPacket = new Packet((short) 0, (short) 8, ackNumber);
+                Packet ackPacket = new Packet((short) 0, (short) 8, ackNum);
                 // we need to randomly need to [DROP] ack packet
                 if (corruption > 0) {
                     if (random.nextInt(10) == 7) {
@@ -98,11 +101,16 @@ public class ThreadFour implements Runnable {
                         // note down this packetNumber since it arrived and ack
                         // was prepareed
                         // but could not proceed further
-                        oldPacketNumber = ackNumber;
+                        threadThree.setOldPacketNumber(ackNum);
                         continue;// start from while loop again
                     }
                 }
+                
+//                if (threadThree.getPacket() == null){
+//                    continue;//exit out of while loop since no received packet
+//                }
 
+                System.out.println("Sending Ack for packet"+ ackNum);
                 // send acknowledgement to the sender
                 // move below code into separate senderThread
                 DatagramPacket ack = new DatagramPacket(ackPacket.getData(), ackPacket.getLength(), threadThree.getPacket().getAddress(), threadThree.getPacket().getPort());
@@ -117,8 +125,10 @@ public class ThreadFour implements Runnable {
                 // check which packet we need to expect next
                 if (ackPacket.getCksum() == 0) {
                     // increase the packetNumber once ack was sent
-                    expectedPacketNumber = ackNumber + 1;
+                    expectedPacketNumber = ackNum + 1;
                     System.out.println("[ACK] [SENT] for packet number " + ackNumber + "\n" + "next packet # should be " + (ackNumber + 1) + " <-----" + "\n" + "\n");
+                    threadThree.setExpectedPacketNumber(expectedPacketNumber);
+                    threadThree.setOldPacketNumber(ackNum);
                 }
             }// end of if (cksumValue == 0)
         }// end of while

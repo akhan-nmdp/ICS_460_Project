@@ -72,10 +72,11 @@ public class SenderMain {
             }
             while (!packets.isEmpty()) {
                 //Packet currentPacket = packets.removeFirst();
-                ThreadOne threadOne = new ThreadOne(packets, corruption, socket, timeout, ip, port);
+                LinkedList<Packet> packetsInTransit= choosePackets(windowSize, packets);
+                ThreadOne threadOne = new ThreadOne(packetsInTransit, corruption, socket, timeout, ip, port);
                 Thread threadS = new Thread(threadOne);
                 threadS.start();
-                ThreadTwo threadTwo= new ThreadTwo(socket, corruption, packets, threadOne);
+                ThreadTwo threadTwo= new ThreadTwo(socket, corruption, packetsInTransit, threadOne);
                 Thread threadR= new Thread(threadTwo);
                 threadR.start();
             }
@@ -84,5 +85,17 @@ public class SenderMain {
     
     private static void disconnect(){
         System.exit(0);
+    }
+    
+    private static LinkedList<Packet> choosePackets(int windowSize, LinkedList<Packet> allPreparedPackets){
+        LinkedList<Packet> packetToSend= new LinkedList<Packet>();
+        if (windowSize > 1){
+            for ( int i = 0; i < windowSize; i++){
+                packetToSend.add(allPreparedPackets.removeFirst());
+            }
+        }else {
+            packetToSend.add(allPreparedPackets.removeFirst());
+        }
+        return packetToSend;
     }
 }

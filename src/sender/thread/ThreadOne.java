@@ -64,7 +64,6 @@ public class ThreadOne implements Runnable {
         currentPacket = packets.removeFirst();
         //by default the checksum will be good checksum of 0
         currentPacket.setCksum(goodCheckSum);
-        setCurrentPacket(currentPacket);
         
         //if user had specified packets to be corrupted, then packets 
         //will be error and delay
@@ -98,7 +97,7 @@ public class ThreadOne implements Runnable {
             ex.printStackTrace();
         }
         
-      //check which msg to print 
+        //check which msg to print 
         if (prevPacketNumber.equals(currentPacket.getSeqno()) && !delayedPacketNumber.equals(currentPacket.getSeqno())) {
             //only need to do [RESEND] when packet was not a delayedPacket 
             //and when packet was sent before but no ack was received  
@@ -108,6 +107,7 @@ public class ThreadOne implements Runnable {
             //otherwise for delayedPackets and normalPackets print SENT
             System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
             System.out.println("[SENT] packet # "+ currentPacket.getSeqno() + " in "+ endTime + " ms ----->" + "\n");
+            setCurrentPacket(currentPacket);
         }
     } catch (SocketTimeoutException ex) {
             //while waiting for receiver sender timed out

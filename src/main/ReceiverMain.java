@@ -34,15 +34,20 @@ public class ReceiverMain {
           //corruption = 20;
           int corruption = inputs.nextInt();
           //packetSize = 10;
+          System.out.println("Please enter timeout:");
+          int timeout= inputs.nextInt();
           //String hostname = inputs.nextLine();
           System.out.println("Please enter port");
           //timeout = 2000;
           int port = inputs.nextInt();
           inputs.close();
           
+          if (timeout == 0)
+              timeout= 2000;
           DatagramSocket socket = null;
         try {
             socket = new DatagramSocket(port, InetAddress.getByName(hostname));
+            socket.setSoTimeout(timeout);
         } catch (SocketException ex) {
            System.out.println("Error while creating socket");
            System.exit(0);

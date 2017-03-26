@@ -71,11 +71,11 @@ public class ThreadThree implements Runnable {
         this.socket = socket;
     }
 
-    public DatagramPacket getPacket() {
+    public synchronized DatagramPacket getPacket() {
         return this.packet;
     }
 
-    public void setPacket(DatagramPacket packet) {
+    public synchronized void setPacket(DatagramPacket packet) {
         this.packet = packet;
     }
 
@@ -134,6 +134,9 @@ public class ThreadThree implements Runnable {
         int oldPacketNumber = 0;
         int expectedPacketNumber = 1;
 
+        
+        // print out what packet is coming
+        System.out.println("Waiting on packet # " + expectedPacketNumber + "\n");
         // variable to extract checksum and seq
         String cksum = "";
         seqNumber = "";
@@ -143,6 +146,7 @@ public class ThreadThree implements Runnable {
             socket.receive(receivePacket);
         } catch (IOException ex) {
             System.out.println("Error while receiving packet");
+            System.exit(0);
         }
 
         // parse the data to get checksum
@@ -158,8 +162,6 @@ public class ThreadThree implements Runnable {
         }
         // convert seq into a number
         currentPacketNumber = Integer.parseInt(seqNumber);
-        // print out what packet is coming
-        System.out.println("Waiting on packet # " + expectedPacketNumber + "\n");
 
         // check whether we have received packet before
         if (oldPacketNumber != currentPacketNumber) {
@@ -170,6 +172,8 @@ public class ThreadThree implements Runnable {
             // otherwise this packet came before
             System.out.println("[RECV] [DUPL] Packet # " + currentPacketNumber + "\n");
         }
+        
+        setPacket(receivePacket);//set the packet that was received
 
         // if the cksumValue is not zero packet is [CRPT] exit out
         if (cksumValue != 0) {
@@ -189,6 +193,7 @@ public class ThreadThree implements Runnable {
                 continue;// start from the while loop again
             }
         }
+        System.out.println("Getting data from packet "+ currentPacketNumber);
         // get the data that was sent
         packageByte = new byte[receivePacket.getLength() - 12];
         for (int i = 0; i < packageByte.length; i++) {
@@ -198,11 +203,15 @@ public class ThreadThree implements Runnable {
         // if checksum value equals zero and no error occurred above
         // proceed with creating ack
         if (cksumValue == 0) {
+            System.out.println("Setting checksumValue for packet"+ currentPacketNumber);
             // assign ack for this packetNumber
             ackNumber = currentPacketNumber;
+            setChecksumValue(cksumValue);
+
             try {
                 // write the data in the new file
                 if (currentPacketNumber == 1) {
+                    System.out.println("Writing the title for packet");
                     // if its the first packet then it has the name of file
                     // get name of file and write to output file
                     if (!packageString.equals(new String(packageByte, characterSet))) {
@@ -210,6 +219,7 @@ public class ThreadThree implements Runnable {
                         writeToFile(packageString);
                     }
                 } else {
+                    System.out.println("Writing the rest of data of packet");
                     // otherwise the packet has content of file, get the
                     // content and write to output file
                     if (!packageString.equals(new String(packageByte, characterSet))) {
@@ -217,15 +227,16 @@ public class ThreadThree implements Runnable {
                         writeToFile(packageByte);
                     }
                 }
+                System.out.println("Setting ackNumber for packet"+ ackNumber);
+                setAckNumber(ackNumber);
+
             } catch (IOException ex) {
                 System.out.println("Error happened while writing to file");
             }//end of catch
+            break;
         }//end of if (cksumValue == 0)
-        setPacket(receivePacket);//set the packet that was received
-        setAckNumber(ackNumber);
-        setChecksumValue(cksumValue);
-        setExpectedPacketNumber(expectedPacketNumber);
-        setOldPacketNumber(oldPacketNumber);
+//        setExpectedPacketNumber(expectedPacketNumber);
+//        setOldPacketNumber(oldPacketNumber);
         }//end of while
     }
    

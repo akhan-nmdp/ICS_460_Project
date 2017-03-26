@@ -44,7 +44,7 @@ public class ThreadTwo implements Runnable {
         Packet currentPacket= null;
         
         Random random= new Random();
-        while(true){
+        while(threadOne.getCurrentPacket() != null){
          try {
              currentPacket= threadOne.getCurrentPacket();
         //wait for Ack from receiver
@@ -59,7 +59,7 @@ public class ThreadTwo implements Runnable {
 //            socket.disconnect();
 //            disconnect();//exit out of program 
 //        }
-
+            System.out.println("Received packet and getting data from packet");
         //go thru packet from position 0 to 2 to get the checksum
         for(int i = 0; i < 3; i++) {
             checksum = checksum + dataFromReceiver[i];
