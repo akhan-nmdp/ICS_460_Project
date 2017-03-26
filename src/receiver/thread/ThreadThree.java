@@ -72,10 +72,21 @@ public class ThreadThree implements Runnable {
     }
 
     public synchronized DatagramPacket getPacket() {
+        while (this.packet == null){
+            System.out.println("Threadthree has not received any packets yet, so need to wait");
+            try {
+                //notifyAll();
+                wait();
+            } catch (InterruptedException ex) {
+                // TODO Auto-generated catch block
+                ex.printStackTrace();
+            }            
+        }
         return this.packet;
     }
 
     public synchronized void setPacket(DatagramPacket packet) {
+        notifyAll();
         this.packet = packet;
     }
 
@@ -137,6 +148,7 @@ public class ThreadThree implements Runnable {
         
         // print out what packet is coming
         System.out.println("Waiting on packet # " + expectedPacketNumber + "\n");
+        setExpectedPacketNumber(expectedPacketNumber);
         // variable to extract checksum and seq
         String cksum = "";
         seqNumber = "";
@@ -145,8 +157,9 @@ public class ThreadThree implements Runnable {
         try {
             socket.receive(receivePacket);
         } catch (IOException ex) {
-            System.out.println("Error while receiving packet");
-            System.exit(0);
+            System.out.println("Timeout while trying to receive packet "+ expectedPacketNumber);
+           continue;//start from while loop again
+            // System.exit(0);
         }
 
         // parse the data to get checksum
@@ -173,8 +186,6 @@ public class ThreadThree implements Runnable {
             System.out.println("[RECV] [DUPL] Packet # " + currentPacketNumber + "\n");
         }
         
-        setPacket(receivePacket);//set the packet that was received
-
         // if the cksumValue is not zero packet is [CRPT] exit out
         if (cksumValue != 0) {
             System.out.println("[CRPT] packet # " + currentPacketNumber + " and need to recieve again  <-----" + "\n");
@@ -229,6 +240,7 @@ public class ThreadThree implements Runnable {
                 }
                 System.out.println("Setting ackNumber for packet"+ ackNumber);
                 setAckNumber(ackNumber);
+                setPacket(receivePacket);//set the packet that was received
 
             } catch (IOException ex) {
                 System.out.println("Error happened while writing to file");
@@ -240,6 +252,10 @@ public class ThreadThree implements Runnable {
         }//end of while
     }
    
+    private synchronized void NotifyPacketReadyToAck(int ackNumber){
+        System.out.println("Notify ThreadThree has received packet "+ ackNumber);
+        notifyAll();
+    }
             /**
              * Write the name of file that was sent by sender to output file
              * @param packageString

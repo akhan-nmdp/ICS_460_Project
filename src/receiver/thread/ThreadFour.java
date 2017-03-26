@@ -14,7 +14,7 @@ public class ThreadFour implements Runnable {
     private int oldPacketNumber;
     private DatagramPacket packet;
     private DatagramSocket socket;
-    private int expectedPacketNumber;
+    private int expectedPacketNumber= 1;
     private int checksumValue;
     private ThreadThree threadThree;
     
@@ -86,10 +86,11 @@ public class ThreadFour implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("ThreadThree has received packet "+ threadThree.getPacket());
-        while (threadThree.getPacket() != null) {
-            if (threadThree.getChecksumValue() == 0) {
-                System.out.println("Getting ackNumber "+threadThree.getAckNumber()+" from ThreadThree ");
+        //while (true){
+        //DatagramPacket packetFromReceiver= checkPacketReady();
+        while(threadThree.getPacket() != null){
+            if (expectedPacketNumber == threadThree.getAckNumber() && threadThree.getChecksumValue() == 0) {
+                System.out.println("ThreadFour is expecting packet "+ expectedPacketNumber+ " And threadThree is sending packet that needs to be ack for packet "+ threadThree.getAckNumber()+ " And threadThree has expectedPacketNumber to be "+ threadThree.getExpectedPacketNumber() );
                 int ackNum= threadThree.getAckNumber();
                 Random random = new Random();
                 // create acknowledgement packet
@@ -126,15 +127,33 @@ public class ThreadFour implements Runnable {
                 if (ackPacket.getCksum() == 0) {
                     // increase the packetNumber once ack was sent
                     expectedPacketNumber = ackNum + 1;
-                    System.out.println("[ACK] [SENT] for packet number " + ackNumber + "\n" + "next packet # should be " + (ackNumber + 1) + " <-----" + "\n" + "\n");
+                    System.out.println("[ACK] [SENT] for packet number " + ackNum + "\n" + "next packet # should be " + (ackNum + 1) + " <-----" + "\n" + "\n");
                     threadThree.setExpectedPacketNumber(expectedPacketNumber);
                     threadThree.setOldPacketNumber(ackNum);
                 }
             }// end of if (cksumValue == 0)
-        }// end of while
+        }// end of while packet != null
+      // }//end of while
     }
 
     public void disconnect(){
         System.exit(0);
+    }
+    
+    private synchronized DatagramPacket checkPacketReady(){
+        while (threadThree.getPacket() == null){
+            try {
+                System.out.println("Inside threadFour notify threadThree packet not ready to ack");
+                notifyAll();
+                System.out.println("Inside threadFour waiting for threadThree to send packet to ack");
+                wait();
+            } catch (InterruptedException ex) {
+                // TODO Auto-generated catch block
+                ex.printStackTrace();
+            }
+        }
+        System.out.println("Inside threadFour notify threadthree has packet ready"+ threadThree.getPacket());
+        notifyAll();
+        return threadThree.getPacket();
     }
 }
