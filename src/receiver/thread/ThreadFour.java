@@ -88,9 +88,10 @@ public class ThreadFour implements Runnable {
     public void run() {
         //while (true){
         //DatagramPacket packetFromReceiver= checkPacketReady();
+        int expectedPacketNum= 1;
         while(threadThree.getPacket() != null){
-            if (expectedPacketNumber == threadThree.getAckNumber() && threadThree.getChecksumValue() == 0) {
-                System.out.println("ThreadFour is expecting packet "+ expectedPacketNumber+ " And threadThree is sending packet that needs to be ack for packet "+ threadThree.getAckNumber()+ " And threadThree has expectedPacketNumber to be "+ threadThree.getExpectedPacketNumber() );
+            if (expectedPacketNum == threadThree.getAckNumber()) {//&& threadThree.getChecksumValue() == 0 removed this last condition
+                System.out.println("ThreadFour is expecting packet "+ expectedPacketNum+ " And threadThree is sending packet that needs to be ack for packet "+ threadThree.getAckNumber()+ " And threadThree has expectedPacketNumber to be "+ threadThree.getExpectedPacketNumber() );
                 int ackNum= threadThree.getAckNumber();
                 Random random = new Random();
                 // create acknowledgement packet
@@ -126,12 +127,13 @@ public class ThreadFour implements Runnable {
                 // check which packet we need to expect next
                 if (ackPacket.getCksum() == 0) {
                     // increase the packetNumber once ack was sent
-                    expectedPacketNumber = ackNum + 1;
+                    expectedPacketNum = ackNum + 1;
                     System.out.println("[ACK] [SENT] for packet number " + ackNum + "\n" + "next packet # should be " + (ackNum + 1) + " <-----" + "\n" + "\n");
-                    threadThree.setExpectedPacketNumber(expectedPacketNumber);
+                    threadThree.setExpectedPacketNumber(expectedPacketNum);
                     threadThree.setOldPacketNumber(ackNum);
                 }
             }// end of if (cksumValue == 0)
+            //System.out.println("Iteration of while loop done");
         }// end of while packet != null
       // }//end of while
     }

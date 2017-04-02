@@ -41,10 +41,12 @@ public class ThreadTwo implements Runnable {
         int ackNumberValue;
         Integer prevAckNumber = 0;
         Integer prevPacketNumber= 0;
+        Integer expectedPacketNumber= 1;
         Packet currentPacket= null;
         
         Random random= new Random();
-        while(threadOne.getCurrentPacket() != null){
+        while(threadOne.getCurrentPacket() != null && expectedPacketNumber.equals(threadOne.getCurrentPacket().getSeqno())){
+            System.out.println(" Current packet from threadOne is packet "+ threadOne.getCurrentPacket().getSeqno() + " And expected packet "+ expectedPacketNumber);
          try {
              currentPacket= threadOne.getCurrentPacket();
         //wait for Ack from receiver
@@ -59,7 +61,7 @@ public class ThreadTwo implements Runnable {
 //            socket.disconnect();
 //            disconnect();//exit out of program 
 //        }
-            System.out.println("Received packet and getting data from packet");
+            System.out.println("Received packet and getting data from packet " + currentPacket.getSeqno());
         //go thru packet from position 0 to 2 to get the checksum
         for(int i = 0; i < 3; i++) {
             checksum = checksum + dataFromReceiver[i];
@@ -71,7 +73,7 @@ public class ThreadTwo implements Runnable {
         }
         ackNumberValue = Integer.parseInt(ackNumber);
         
-        System.out.println(" Going to prepare ack for packet "+ ackNumberValue);
+        System.out.println(" Going to print ack for packet "+ ackNumberValue);
         
         //randomly drop the Ack that was sent to by receiver, test out maybe need to remove for project 1?????
         if (corruption > 0){
@@ -100,6 +102,11 @@ public class ThreadTwo implements Runnable {
                 //otherwise this is the first time we are receiving ack for this packet
                 System.out.println("[AckRcvd] for packet # " + ackNumberValue + "\n"+ "\n");
             }
+            expectedPacketNumber= ackNumberValue+1;
+            System.out.println("The next packet that should be ACK is packet "+ expectedPacketNumber);
+            System.out.println("Tell threadOne acked for packet "+ackNumberValue+" was received");
+            threadOne.setAckedPacket(ackNumberValue);
+            //threadOne.setNextPacketNumber(expectedPacketNumber);
         }//end of if (checksumValue == 0)
          } catch (SocketTimeoutException ex) {
             //while waiting for receiver sender timed out
@@ -107,6 +114,9 @@ public class ThreadTwo implements Runnable {
             //note down this packet will have to resent
             prevPacketNumber= currentPacket.getSeqno();
             threadOne.setPreviousPacketNumber(prevPacketNumber);
+            System.out.println(" Timedout so need to receive agai to be acked packet "+ expectedPacketNumber);
+            expectedPacketNumber= currentPacket.getSeqno();
+            System.out.println(" Timedout so next packet should be packet "+ expectedPacketNumber);
             //add this packet in front as it need to be resent
             packets.addFirst(currentPacket);
         } catch (IOException ex) {

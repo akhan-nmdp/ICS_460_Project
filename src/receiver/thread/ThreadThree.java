@@ -124,8 +124,13 @@ public class ThreadThree implements Runnable {
 
     @Override
     public void run() {
-        while(true){
-        // object to generate random number
+        // variable to keep track of packets that arrived and are coming
+        int oldPacketNumber = 0;
+        int expectedPacketNumber = 1;
+        // packet and ack number that will be used keep track of packets
+        int currentPacketNumber = 1;
+        int ackNumber = 1;
+     // object to generate random number
         Random random = new Random();
         // supported character type
         String characterSet = "UTF-8";
@@ -133,18 +138,13 @@ public class ThreadThree implements Runnable {
         // variable to to store package properties
         String seqNumber = "";
         String packageString = "";
-        byte[] packageByte;
-        // packet and ack number that will be used keep track of packets
-        int currentPacketNumber = 1;
-        int ackNumber = 1;
         // checksum value coming from sender
         int cksumValue = 0;
+        while(true){
+        
+        byte[] packageByte;
         // variable to store data that comes from sender
         byte[] data = new byte[1024];
-        // variable to keep track of packets that arrived and are coming
-        int oldPacketNumber = 0;
-        int expectedPacketNumber = 1;
-
         
         // print out what packet is coming
         System.out.println("Waiting on packet # " + expectedPacketNumber + "\n");
