@@ -5,6 +5,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -28,6 +30,9 @@ public class ThreadOne implements Runnable {
     //varaible to know when to send next packet
     private Integer nextPacketNumber= 1;
     private int ackedPacket;
+    
+    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
+    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
     
     public ThreadOne(Packet currentPacket, LinkedList<Packet> packets, int corruption, DatagramSocket socket, int timeout, InetAddress ip, int port) {
         super();
@@ -91,12 +96,12 @@ public class ThreadOne implements Runnable {
                     // randomly make this packet a bad packet
                     if (random.nextInt(5) == 2) {
                         // this packet is bad packet
-                        System.out.println("[ERRR] packet # " + currentPacket.getSeqno() + " is bad packet \n");
+                        System.out.println("[ERRR] packet # " + currentPacket.getSeqno() + " is bad packet  " + sdf.format(timestamp) + "\n");
                         // assign bad checksum to packet
                         currentPacket.setCksum(badCheckSum);
                     } else if (random.nextInt(5) == 3) {
                         // randomly make this packet delayed
-                        System.out.println("[DLYD] packet # " + currentPacket.getSeqno() + "\n");
+                        System.out.println("[DLYD] packet # " + currentPacket.getSeqno() + "  " + sdf.format(timestamp) + "\n");
                         for (int z = 0; z <= timeout; z++) {
                             // do nothing just wait
                         }
@@ -115,12 +120,12 @@ public class ThreadOne implements Runnable {
                     // only need to do [RESEND] when packet was not a
                     // delayedPacket
                     // and when packet was sent before but no ack was received
-                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + " -----> \n");
+                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "  " + sdf.format(timestamp) + "  -----> \n");
                 } else {
                     long endTime = System.currentTimeMillis() - startTime;
                     // otherwise for delayedPackets and normalPackets print SENT
                     System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
-                    System.out.println("[SENT] packet # " + currentPacket.getSeqno() + " in " + endTime + " ms ----->" + "\n");
+                    System.out.println("[SENT] packet # " + currentPacket.getSeqno() + " in " + endTime + " ms  " +  sdf.format(timestamp) + "  -----> \n");
                     setCurrentPacket(currentPacket);
                 }
             }//end of while currentPacket != null
