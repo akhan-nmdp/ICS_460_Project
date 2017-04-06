@@ -31,7 +31,7 @@ public class ThreadFour implements Runnable {
         this.checksumValue= checksumValue;
         this.threadThree= threadThree;
     }
-    
+    //
     private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 

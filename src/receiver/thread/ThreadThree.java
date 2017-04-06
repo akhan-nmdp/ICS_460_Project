@@ -23,7 +23,7 @@ public class ThreadThree implements Runnable {
     private int expectedPacketNumber;
     private int checksumValue;
     private int oldPacketNumber;
-    
+    //
     private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
     

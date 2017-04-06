@@ -18,7 +18,7 @@ public class ThreadTwo implements Runnable {
     private Packet currentPacket;
     private LinkedList<Packet> packets;
     private ThreadOne threadOne;
-    
+    //
     private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
     

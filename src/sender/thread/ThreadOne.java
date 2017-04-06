@@ -30,7 +30,7 @@ public class ThreadOne implements Runnable {
     //varaible to know when to send next packet
     private Integer nextPacketNumber= 1;
     private int ackedPacket;
-    
+    //
     private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
     
