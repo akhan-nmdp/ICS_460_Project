@@ -11,7 +11,8 @@ import java.util.LinkedList;
  */
 public class PacketBuilder {
     
-    private final String defaultPath= "C:\\DevApps\\GitLocal\\ICS_460_Project\\src\\resources\\";
+    //private final String defaultPath= "C:\\DevApps\\GitLocal\\ICS_460_Project\\src\\resources\\";
+	private final String defaultPath= "C:\\Users\\pg676_000.TENDHAR-PC\\Desktop\\ComputerNetworkClass\\ICS_460_Project\\src\\resources\\";
     private String fileName= "test.txt";
     /**
      * Read data from file and puts data in packets

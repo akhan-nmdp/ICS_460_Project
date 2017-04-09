@@ -6,7 +6,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 import receiver.thread.ReceiverThread;
-import receiver.thread.SenderThread;
+//import receiver.thread.SenderThread;
 /**
  * This class receives packet from sender and acknowledges the packet
  *

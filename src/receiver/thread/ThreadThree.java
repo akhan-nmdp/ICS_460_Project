@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Random;
 
 import main.Packet;
@@ -24,6 +26,9 @@ public class ThreadThree implements Runnable {
     private int expectedPacketNumber;
     private int checksumValue;
     private int oldPacketNumber;
+    //
+    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
+    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
     
     public ThreadThree(int windowSize, int corruption, int port, String ipAddress, DatagramSocket socket) {
         super();
@@ -177,7 +182,7 @@ public class ThreadThree implements Runnable {
         try {
             socket.receive(receivePacket);
         } catch (IOException ex) {
-            System.out.println("Timeout while trying to receive packet "+ expectedPacketNumber);
+            System.out.println("Timeout while trying to receive packet "+ expectedPacketNumber + "  " + sdf.format(timestamp));
            continue;//start from while loop again
             // System.exit(0);
         }
@@ -201,7 +206,7 @@ public class ThreadThree implements Runnable {
         if (oldPacketNumber != currentPacketNumber) {
             // if this packet has not arrived before then we
             // receiving it for first time
-            System.out.println("[RECV] Packet # " + currentPacketNumber + "\n");
+            System.out.println("[RECV] Packet # " + currentPacketNumber + sdf.format(timestamp) + "\n");
         } else {
             // otherwise this packet came before
             System.out.println("[RECV] [DUPL] Packet # " + currentPacketNumber + "\n");
@@ -209,7 +214,7 @@ public class ThreadThree implements Runnable {
         
         // if the cksumValue is not zero packet is [CRPT] exit out
         if (cksumValue != 0) {
-            System.out.println("[CRPT] packet # " + currentPacketNumber + " and need to recieve again  <-----" + "\n");
+            System.out.println("[CRPT] packet # " + currentPacketNumber + " and need to recieve again  <----- " + sdf.format(timestamp) +  "\n");
             // note down this packetNumber since it arrived but was
             // could not proceed further
             oldPacketNumber = currentPacketNumber;
@@ -218,7 +223,7 @@ public class ThreadThree implements Runnable {
         // we need to randomly [DROP] packet and exit out
         if (corruption > 0) {
             if (random.nextInt(10) == 5) {
-                System.out.println("[DROP] packet # " + currentPacketNumber + " <-----\n");
+                System.out.println("[DROP] packet # " + currentPacketNumber + " <----- " + sdf.format(timestamp) + "\n");
                 // note down this packetNumber since it arrived but was
                 // could not proceed further
                 oldPacketNumber = currentPacketNumber;
@@ -265,7 +270,7 @@ public class ThreadThree implements Runnable {
                 expectedPacketNumber= ackNumber +1;//we should not receive next packet
 
             } catch (IOException ex) {
-                System.out.println("Error happened while writing to file");
+                System.out.println("Error happened while writing to file " + sdf.format(timestamp));
             }//end of catch
         }//end of if (cksumValue == 0)
 //        setExpectedPacketNumber(expectedPacketNumber);
