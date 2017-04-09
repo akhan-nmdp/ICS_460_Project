@@ -89,8 +89,9 @@ public class ThreadFour implements Runnable {
         //while (true){
         //DatagramPacket packetFromReceiver= checkPacketReady();
         int expectedPacketNum= 1;
-        while(threadThree.getPacket() != null){
-            if (expectedPacketNum == threadThree.getAckNumber()) {//&& threadThree.getChecksumValue() == 0 removed this last condition
+        while(true){
+            System.out.println("Inside run method for threadFour");
+            if (threadThree.getPacket() != null) {//&& threadThree.getChecksumValue() == 0 removed this last condition
                 System.out.println("ThreadFour is expecting packet "+ expectedPacketNum+ " And threadThree is sending packet that needs to be ack for packet "+ threadThree.getAckNumber()+ " And threadThree has expectedPacketNumber to be "+ threadThree.getExpectedPacketNumber() );
                 int ackNum= threadThree.getAckNumber();
                 Random random = new Random();

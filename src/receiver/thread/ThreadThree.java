@@ -7,6 +7,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Random;
 
+import main.Packet;
+
 public class ThreadThree implements Runnable {
 
     private int windowSize;
@@ -15,6 +17,7 @@ public class ThreadThree implements Runnable {
     private String ipAddress;
     private DatagramSocket socket;
     private FileOutputStream output = null;
+    private int receivedPacketSeqNum;
     //variable to be used by threadFour
     private DatagramPacket packet;
     private int ackNumber;
@@ -71,17 +74,33 @@ public class ThreadThree implements Runnable {
         this.socket = socket;
     }
 
+    public int getReceivedPacketSeqNum() {
+        return this.receivedPacketSeqNum;
+    }
+
+    public void setReceivedPacketSeqNum(int receivedPacketSeqNum) {
+        this.receivedPacketSeqNum = receivedPacketSeqNum;
+    }
+
     public synchronized DatagramPacket getPacket() {
-        while (this.packet == null){
-            System.out.println("Threadthree has not received any packets yet, so need to wait");
+        if (this.packet == null){
+            System.out.println("Threadthree has not received any packets yet need to wait"); 
             try {
-                //notifyAll();
                 wait();
             } catch (InterruptedException ex) {
                 // TODO Auto-generated catch block
                 ex.printStackTrace();
             }            
-        }
+        } 
+//        else if (this.packet != null && getOldPacketNumber() == getAckNumber()){
+//            System.out.println("received packet "+ getReceivedPacketSeqNum()+ " and expected packet "+ getExpectedPacketNumber()+ " are not equal need to wait"); 
+//            try {
+//                wait();
+//            } catch (InterruptedException ex) {
+//                // TODO Auto-generated catch block
+//                ex.printStackTrace();
+//            }      
+//        }
         return this.packet;
     }
 
@@ -141,7 +160,8 @@ public class ThreadThree implements Runnable {
         // checksum value coming from sender
         int cksumValue = 0;
         while(true){
-        
+            System.out.println("Inside run method for threadThree");
+            
         byte[] packageByte;
         // variable to store data that comes from sender
         byte[] data = new byte[1024];
@@ -175,6 +195,7 @@ public class ThreadThree implements Runnable {
         }
         // convert seq into a number
         currentPacketNumber = Integer.parseInt(seqNumber);
+        setReceivedPacketSeqNum(currentPacketNumber);
 
         // check whether we have received packet before
         if (oldPacketNumber != currentPacketNumber) {
@@ -241,11 +262,11 @@ public class ThreadThree implements Runnable {
                 System.out.println("Setting ackNumber for packet"+ ackNumber);
                 setAckNumber(ackNumber);
                 setPacket(receivePacket);//set the packet that was received
+                expectedPacketNumber= ackNumber +1;//we should not receive next packet
 
             } catch (IOException ex) {
                 System.out.println("Error happened while writing to file");
             }//end of catch
-            break;
         }//end of if (cksumValue == 0)
 //        setExpectedPacketNumber(expectedPacketNumber);
 //        setOldPacketNumber(oldPacketNumber);

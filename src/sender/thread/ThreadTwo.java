@@ -35,9 +35,9 @@ public class ThreadTwo implements Runnable {
 
     @Override
     public void run() {
-        String checksum= "";
+        System.out.println("Inside run method for threadTwo");
         int checksumValue;
-        String ackNumber= "";
+
         int ackNumberValue;
         Integer prevAckNumber = 0;
         Integer prevPacketNumber= 0;
@@ -45,12 +45,16 @@ public class ThreadTwo implements Runnable {
         Packet currentPacket= null;
         
         Random random= new Random();
-        while(threadOne.getCurrentPacket() != null && expectedPacketNumber.equals(threadOne.getCurrentPacket().getSeqno())){
-            System.out.println(" Current packet from threadOne is packet "+ threadOne.getCurrentPacket().getSeqno() + " And expected packet "+ expectedPacketNumber);
-         try {
+        while(true){
+            String ackNumber= "";
+            String checksum= "";
+            //threadOne.getCurrentPacket() != null && expectedPacketNumber.equals(threadOne.getCurrentPacket().getSeqno())){
+//            System.out.println(" Current packet from threadOne is packet "+ threadOne.getCurrentPacket().getSeqno() + " And expected packet "+ expectedPacketNumber);
+         if (threadOne.getCurrentPacket() != null && expectedPacketNumber.equals(threadOne.getCurrentPacket().getSeqno())){
+            try {
              currentPacket= threadOne.getCurrentPacket();
         //wait for Ack from receiver
-        System.out.println("Waiting for [Ack] for packet # " + currentPacket.getSeqno() + "\n");
+        System.out.println("Waiting for [Ack] for packet # " + expectedPacketNumber + "\n");
         //get the datagramPacket from receiver
         byte[] dataFromReceiver = new byte[1024];
         DatagramPacket receiverPacket = new DatagramPacket(dataFromReceiver, dataFromReceiver.length);
@@ -61,7 +65,6 @@ public class ThreadTwo implements Runnable {
 //            socket.disconnect();
 //            disconnect();//exit out of program 
 //        }
-            System.out.println("Received packet and getting data from packet " + currentPacket.getSeqno());
         //go thru packet from position 0 to 2 to get the checksum
         for(int i = 0; i < 3; i++) {
             checksum = checksum + dataFromReceiver[i];
@@ -73,8 +76,11 @@ public class ThreadTwo implements Runnable {
         }
         ackNumberValue = Integer.parseInt(ackNumber);
         
-        System.out.println(" Going to print ack for packet "+ ackNumberValue);
+        System.out.println("Received packet "+ackNumberValue);
         
+//        if (threadOne.getCurrentPacket().getSeqno() == ackNumberValue){
+//            System.out.println("ThreadOne current packet "+threadOne.getCurrentPacket().getSeqno()+ " matched the received ack packet "+ ackNumberValue);
+//            currentPacket= threadOne.getCurrentPacket();
         //randomly drop the Ack that was sent to by receiver, test out maybe need to remove for project 1?????
         if (corruption > 0){
             //randomly [DROP] the Ack
@@ -107,7 +113,8 @@ public class ThreadTwo implements Runnable {
             System.out.println("Tell threadOne acked for packet "+ackNumberValue+" was received");
             threadOne.setAckedPacket(ackNumberValue);
             //threadOne.setNextPacketNumber(expectedPacketNumber);
-        }//end of if (checksumValue == 0)
+            }//end of if (checksumValue == 0)
+
          } catch (SocketTimeoutException ex) {
             //while waiting for receiver sender timed out
             System.out.println("[TimeOut] while waiting to receieve ACK for packet # "+ currentPacket.getSeqno()+ " \n");
@@ -123,7 +130,8 @@ public class ThreadTwo implements Runnable {
             // TODO Auto-generated catch block
             ex.printStackTrace();
         }
-    }
+      }//end if threadOne.getCurrentPacket() != null
+        }//end while
     }
 
     public void disconnect(){

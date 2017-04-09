@@ -27,7 +27,7 @@ public class ThreadOne implements Runnable {
     private Packet currentPacket;
     //varaible to know when to send next packet
     private Integer nextPacketNumber= 1;
-    private int ackedPacket;
+    private Integer ackedPacket;
     
     public ThreadOne(Packet currentPacket, LinkedList<Packet> packets, int corruption, DatagramSocket socket, int timeout, InetAddress ip, int port) {
         super();
@@ -54,6 +54,7 @@ public class ThreadOne implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("Inside run method for threadOne");
         // get the start time
         long startTime = System.currentTimeMillis();
         // variable to store checksum and ack
@@ -141,24 +142,34 @@ public class ThreadOne implements Runnable {
     }
     
 
-    private LinkedList<Packet> choosePackets(int windowSize, LinkedList<Packet> allPreparedPackets) {
-        LinkedList<Packet> packetToSend = new LinkedList<Packet>();
+    private synchronized LinkedList<Packet> choosePackets(int windowSize, LinkedList<Packet> allPreparedPackets) {
+        LinkedList<Packet> packetsToSend = new LinkedList<Packet>();
         if (allPreparedPackets != null && !allPreparedPackets.isEmpty()) {
             if (windowSize > 1) {
                 for (int i = 0; i < windowSize; i++) {
-                    packetToSend.add(allPreparedPackets.removeFirst());
+                    packetsToSend.add(allPreparedPackets.removeFirst());
                 }
             } else {
-                packetToSend.add(allPreparedPackets.removeFirst());
-                System.out.println(" window size it just one so adding packet "+ packetToSend.getLast().getSeqno());
+                Packet packet = allPreparedPackets.getFirst();
+                if (packet.getSeqno() > 1) {
+                    System.out.println(" Need wait for packet "+packet.getSeqno()+" until we receive ack for previous packet");
+                    try {
+                        wait();
+                    } catch (InterruptedException ex) {
+                        // TODO Auto-generated catch block
+                        ex.printStackTrace();
+                    }
+                }
+                packetsToSend.add(allPreparedPackets.removeFirst());
+                System.out.println(" window size is just one so adding packet " + packet.getSeqno());
             }
         }
-        return packetToSend;
+        return packetsToSend;
     }
     
 
-    private synchronized void sendPacket(Packet currentPacket) {
-        if (currentPacket.getSeqno() > 1) {
+    private void sendPacket(Packet currentPacket) {
+/*        if (currentPacket.getSeqno() > 1) {
             try {
                 System.out.println("Waiting until someone tells me to proceed with sending packets ");
                 wait();
@@ -166,7 +177,7 @@ public class ThreadOne implements Runnable {
                 // TODO Auto-generated catch block
                 ex1.printStackTrace();
             }
-        }
+        }*/
         DatagramPacket output = new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, port);
         // send the packet
         try {
@@ -179,10 +190,15 @@ public class ThreadOne implements Runnable {
     }
 
     public synchronized void setAckedPacket(int ackedPacket){
-        System.out.println("Notified that we can send next packet");
+        System.out.println("Notified that we have recieved ack and can send next packet");
         notify();
         this.ackedPacket= ackedPacket;
     }
+
+    public Integer getAckedPacket() {
+        return this.ackedPacket;
+    }
+
 
     public Integer getNextPacketNumber() {
         return this.nextPacketNumber;
@@ -214,12 +230,22 @@ public class ThreadOne implements Runnable {
     }
 
 
-    public Packet getCurrentPacket() {
+    public  Packet getCurrentPacket() {
+//        if (this.currentPacket == null){
+//            try {
+//                wait();
+//            } catch (InterruptedException ex) {
+//                // TODO Auto-generated catch block
+//                ex.printStackTrace();
+//            }
+//        }
         return this.currentPacket;
     }
 
 
-    public void setCurrentPacket(Packet currentPacket) {
+    public  void setCurrentPacket(Packet currentPacket) {
+//        System.out.println("Notified that we have sent next packet");
+//        notify();
         this.currentPacket = currentPacket;
     }
 
