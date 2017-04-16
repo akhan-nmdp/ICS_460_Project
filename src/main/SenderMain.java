@@ -10,7 +10,10 @@ import java.util.Scanner;
 
 import sender.thread.ThreadOne;
 import sender.thread.ThreadTwo;
-
+/**
+ * Main class for sender that creates threads
+ *
+ */
 public class SenderMain {
 
     public static void main(String args[]) {
@@ -31,15 +34,10 @@ public class SenderMain {
         System.out.println("Please enter packetSize");
         int packetSize= inputs.nextInt();
         System.out.println("Please enter window");
-        //window = 5;
         int windowSize = inputs.nextInt();
         System.out.println("Please enter corruption:");
-        //corruption = 20;
         int corruption = inputs.nextInt();
-        //packetSize = 10;
-        //String hostname = inputs.nextLine();
         System.out.println("Please enter port");
-        //timeout = 2000;
         int port = inputs.nextInt();
         inputs.close();
         
@@ -70,32 +68,21 @@ public class SenderMain {
                 System.out.println("Error happened while building packets");
                 disconnect();
             }
-            while (!packets.isEmpty()) {
-                //Packet currentPacket = packets.removeFirst();
-                //LinkedList<Packet> packetsInTransit= choosePackets(windowSize, packets);
-                ThreadOne threadOne = new ThreadOne(packets, windowSize, corruption, socket, timeout, ip, port);
-                Thread threadS = new Thread(threadOne);
-                threadS.start();
-                ThreadTwo threadTwo= new ThreadTwo(socket, corruption, packets, threadOne);
-                Thread threadR= new Thread(threadTwo);
-                threadR.start();
-            }
-        //}//end of if
+
+                try {
+                    ThreadOne threadOne = new ThreadOne(packets, windowSize, corruption, socket, timeout, ip, port);
+                    Thread threadS = new Thread(threadOne);
+                    threadS.start();
+                    ThreadTwo threadTwo= new ThreadTwo(socket, corruption, packets, threadOne);
+                    Thread threadR= new Thread(threadTwo);
+                    threadR.start();
+                } catch (Exception ex) {
+                    // TODO Auto-generated catch block
+                    ex.printStackTrace();
+                }
     }
     
     private static void disconnect(){
         System.exit(0);
-    }
-    
-    private static LinkedList<Packet> choosePackets(int windowSize, LinkedList<Packet> allPreparedPackets){
-        LinkedList<Packet> packetToSend= new LinkedList<Packet>();
-        if (windowSize > 1){
-            for ( int i = 0; i < windowSize; i++){
-                packetToSend.add(allPreparedPackets.removeFirst());
-            }
-        }else {
-            packetToSend.add(allPreparedPackets.removeFirst());
-        }
-        return packetToSend;
     }
 }

@@ -8,7 +8,10 @@ import java.text.SimpleDateFormat;
 import java.util.Random;
 
 import main.Packet;
-
+/**
+ * Thread that is called by Receiver to send acknowledgment packets
+ *
+ */
 public class ThreadFour implements Runnable {
 
     private int ackNumber;
@@ -17,24 +20,17 @@ public class ThreadFour implements Runnable {
     private DatagramPacket packet;
     private DatagramSocket socket;
     private int expectedPacketNumber= 1;
-    private int checksumValue;
     private ThreadThree threadThree;
     
-    public ThreadFour(int ackNumber, int corruption, int oldPacketNumber, DatagramPacket packet, DatagramSocket socket, int expectedPacketNumber, int checksumValue, ThreadThree threadThree) {
-        super();
-        this.ackNumber = ackNumber;
-        this.corruption = corruption;
-        this.oldPacketNumber = oldPacketNumber;
-        this.packet = packet;
-        this.socket = socket;
-        this.expectedPacketNumber = expectedPacketNumber;
-        this.checksumValue= checksumValue;
-        this.threadThree= threadThree;
-    }
-    //
+    
     private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-
+    /**
+     * Constructor
+     * @param corruption2
+     * @param socket2
+     * @param threadThree2
+     */
     public ThreadFour(int corruption2, DatagramSocket socket2, ThreadThree threadThree2) {
         this.corruption=corruption2;
         this.socket= socket2;
@@ -91,12 +87,12 @@ public class ThreadFour implements Runnable {
 
     @Override
     public void run() {
-        //while (true){
-        //DatagramPacket packetFromReceiver= checkPacketReady();
+
         int expectedPacketNum= 1;
         while(true){
             System.out.println("Inside run method for threadFour");
-            if (threadThree.getPacket() != null) {//&& threadThree.getChecksumValue() == 0 removed this last condition
+            DatagramPacket currentpacket= threadThree.getPacket(); 
+            if (currentpacket!= null) {//&& threadThree.getChecksumValue() == 0 removed this last condition
                 System.out.println("ThreadFour is expecting packet "+ expectedPacketNum+ " And threadThree is sending packet that needs to be ack for packet "+ threadThree.getAckNumber()+ " And threadThree has expectedPacketNumber to be "+ threadThree.getExpectedPacketNumber() );
                 int ackNum= threadThree.getAckNumber();
                 Random random = new Random();
@@ -113,15 +109,11 @@ public class ThreadFour implements Runnable {
                         continue;// start from while loop again
                     }
                 }
-                
-//                if (threadThree.getPacket() == null){
-//                    continue;//exit out of while loop since no received packet
-//                }
 
                 System.out.println("Sending Ack for packet"+ ackNum);
                 // send acknowledgement to the sender
                 // move below code into separate senderThread
-                DatagramPacket ack = new DatagramPacket(ackPacket.getData(), ackPacket.getLength(), threadThree.getPacket().getAddress(), threadThree.getPacket().getPort());
+                DatagramPacket ack = new DatagramPacket(ackPacket.getData(), ackPacket.getLength(), currentpacket.getAddress(), currentpacket.getPort());
                 try {
                     socket.send(ack);
                 } catch (IOException ex) {
@@ -137,11 +129,10 @@ public class ThreadFour implements Runnable {
                     System.out.println("[ACK] [SENT] for packet number " + ackNum + " <-----" + " " + sdf.format(timestamp) + "\n" + "next packet # should be " + (ackNum + 1) + "\n" + "\n");
                     threadThree.setExpectedPacketNumber(expectedPacketNum);
                     threadThree.setOldPacketNumber(ackNum);
-                }
-            }// end of if (cksumValue == 0)
-            //System.out.println("Iteration of while loop done");
+                }//end of if (cksumValue == 0)
+            }// end of threadThree.getPacket() != null
         }// end of while packet != null
-      // }//end of while
+      
     }
 
     public void disconnect(){
@@ -163,5 +154,6 @@ public class ThreadFour implements Runnable {
         System.out.println("Inside threadFour notify threadthree has packet ready"+ threadThree.getPacket());
         notifyAll();
         return threadThree.getPacket();
-    }
+    }           
+
 }

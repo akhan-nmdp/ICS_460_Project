@@ -13,7 +13,10 @@ import java.util.Random;
 import javax.swing.plaf.SliderUI;
 
 import main.Packet;
-
+/**
+ * Thread that called by sender to send packets
+ *
+ */
 public class ThreadOne implements Runnable {
 
     private LinkedList<Packet> packets;
@@ -27,26 +30,20 @@ public class ThreadOne implements Runnable {
     private Integer previousPacketNumber;
     private Integer delayedPacketNumber;
     private Packet currentPacket;
-    //varaible to know when to send next packet
+    //variable to know when to send next packet
     private Integer nextPacketNumber= 1;
     private Integer ackedPacket;
-    //
-    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
-    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-
-    
-    public ThreadOne(Packet currentPacket, LinkedList<Packet> packets, int corruption, DatagramSocket socket, int timeout, InetAddress ip, int port) {
-        super();
-        this.currentPacket = currentPacket;
-        this.packets = packets;
-        this.corruption = corruption;
-        this.socket = socket;
-        this.timeout = timeout;
-        this.ip= ip;
-        this.port= port;
-    }
-
-
+    private Integer incrementValue;
+    /**
+     * Constructor
+     * @param packets2
+     * @param windowSize
+     * @param corruption2
+     * @param socket2
+     * @param timeout2
+     * @param ip2
+     * @param port2
+     */
     public ThreadOne(LinkedList<Packet> packets2, int windowSize, int corruption2, DatagramSocket socket2, int timeout2, InetAddress ip2, int port2) {
         this.packets = packets2;
         this.corruption = corruption2;
@@ -64,130 +61,131 @@ public class ThreadOne implements Runnable {
         // get the start time
         long startTime = System.currentTimeMillis();
         // variable to store checksum and ack
-        String checksum = "";
-        String ackNumber = "";
-        int checksumValue = 0;
-        short goodCheckSum = 0;
         short badCheckSum = 1;
         Packet currentPacket = null;
         Integer delayedPacketNumber = 0;
         Integer prevPacketNumber = 0;
         Random random = new Random();
-        try {
+        
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
             // check the packet and set its checksum
-            // currentPacket = packets.removeFirst();
             while (!packets.isEmpty()){
-            // get the packet to send based on window size
-            LinkedList<Packet> packetsInTransit = choosePackets(windowSize, packets);
-            if (!packetsInTransit.isEmpty()) {
-                // get the packet that needs to be sent
-                currentPacket = packetsInTransit.removeFirst();
-                System.out.println("Getting ready packet "+currentPacket.getSeqno());
-            } else {
-                System.out.println("No more packets to send so need to make threadOne to sleep for " + timeout);
-                Thread.sleep(timeout);
-            }
-            if (currentPacket != null) {
-                //System.out.println("Current packet number "+ currentPacket.getSeqno() + " And expected packet number "+ getNextPacketNumber()+ " matched proceed with sending packet");
-                // by default the checksum will be good checksum of 0
-                currentPacket.setCksum(goodCheckSum);
+                
+                try {
+                    
+                    LinkedList<Packet> packetsInTransit = choosePackets(windowSize, packets);
+                    
+                    while (!packetsInTransit.isEmpty()){
+                       
+                        currentPacket = packetsInTransit.removeFirst();                            
+                        System.out.println("Getting ready packet "+currentPacket.getSeqno());
+                        
+                        if (corruption > 0) {
+                            // randomly make this packet a bad packet
+                            if (random.nextInt(5) == 2) {
+                                // this packet is bad packet
+                                System.out.println("[ERRR] packet # " + currentPacket.getSeqno() + " is bad packet  " + sdf.format(timestamp) + "\n");
+                                // assign bad checksum to packet
+                                currentPacket.setCksum(badCheckSum);
+                            } else if (random.nextInt(5) == 3) {
+                                // randomly make this packet delayed
+                                System.out.println("[DLYD] packet # " + currentPacket.getSeqno() + "  " + sdf.format(timestamp) + "\n");
+                                for (int z = 0; z <= timeout; z++) {
+                                    // do nothing just wait
+                                }
+                                // assign current packet as delayedPacket and timeout
+                                delayedPacketNumber = currentPacket.getSeqno();
+                                throw new SocketTimeoutException();
+                            }
+                        }// end of if (corruption > 0)
 
-                // if user had specified packets to be corrupted, then packets
-                // will be error and delay
-                if (corruption > 0) {
-                    // randomly make this packet a bad packet
-                    if (random.nextInt(5) == 2) {
-                        // this packet is bad packet
-                        System.out.println("[ERRR] packet # " + currentPacket.getSeqno() + " is bad packet  " + sdf.format(timestamp) + "\n");
-                        // assign bad checksum to packet
-                        currentPacket.setCksum(badCheckSum);
-                    } else if (random.nextInt(5) == 3) {
-                        // randomly make this packet delayed
-                        System.out.println("[DLYD] packet # " + currentPacket.getSeqno() + "  " + sdf.format(timestamp) + "\n");
-                        for (int z = 0; z <= timeout; z++) {
-                            // do nothing just wait
+                        // create datagram packet which will be sent to receiver
+                        sendPacket(currentPacket, sdf, timestamp);
+                        
+                        if (prevPacketNumber.equals(currentPacket.getSeqno()) && !delayedPacketNumber.equals(currentPacket.getSeqno())) {
+                            // only need to do [RESEND] when packet was not a
+                            // delayedPacket
+                            // and when packet was sent before but no ack was received
+                            System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "  " + sdf.format(timestamp) + "  -----> \n");
+                        } else {
+                            long endTime = System.currentTimeMillis() - startTime;
+                            // otherwise for delayedPackets and normalPackets print SENT
+                            System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
+                            System.out.println("[SENT] packet # " + currentPacket.getSeqno() + " in " + endTime + " ms  " +  sdf.format(timestamp) + "  -----> \n");
+                            setCurrentPacket(currentPacket);
+                            System.out.println("Data in the packet was "+ convertFrom(currentPacket.getData()));
                         }
-                        // assign current packet as delayedPacket and timeout
-                        delayedPacketNumber = currentPacket.getSeqno();
-                        throw new SocketTimeoutException();
-                    }
-                }// end of if (corruption > 0)
-
-
-                // create datagram packet which will be sent to receiver
-                sendPacket(currentPacket);
-
-                // check which msg to print
-                if (prevPacketNumber.equals(currentPacket.getSeqno()) && !delayedPacketNumber.equals(currentPacket.getSeqno())) {
-                    // only need to do [RESEND] when packet was not a
-                    // delayedPacket
-                    // and when packet was sent before but no ack was received
-                    System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "  " + sdf.format(timestamp) + "  -----> \n");
-                } else {
-                    long endTime = System.currentTimeMillis() - startTime;
-                    // otherwise for delayedPackets and normalPackets print SENT
-                    System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
-                    System.out.println("[SENT] packet # " + currentPacket.getSeqno() + " in " + endTime + " ms  " +  sdf.format(timestamp) + "  -----> \n");
-                    setCurrentPacket(currentPacket);
-                }
-            }//end of while currentPacket != null
-            //System.out.println("Done with threadOne since no more packet to send");
-            }//end of while
-            } catch (SocketTimeoutException ex) {
-            // while waiting for receiver sender timed out
-            System.out.println("[TimeOut] while sending packet # " + currentPacket.getSeqno() + " \n");
-            // note down this packet will have to resent
-            prevPacketNumber = currentPacket.getSeqno();
-            setPreviousPacketNumber(prevPacketNumber);
-            // add this packet in front as it need to be resent
-            packets.addFirst(currentPacket);
-        } catch (InterruptedException ex) {
-            // TODO Auto-generated catch block
-            ex.printStackTrace();
-        }
+                        
+                    }//end of  while (!packetsInTransit.isEmpty())
+                    
+                }catch (SocketTimeoutException ex) {
+                    // while waiting for receiver sender timed out
+                    System.out.println("[TimeOut] while sending packet # " + currentPacket.getSeqno() + " \n");
+                    // note down this packet will have to resent
+                    prevPacketNumber = currentPacket.getSeqno();
+                    setPreviousPacketNumber(prevPacketNumber);
+                    // add this packet in front as it need to be resent
+                    packets.addFirst(currentPacket);
+                }                   
+            }//end of while (!packets.isEmpty())            
+    }//end of run 
+            
+    private static String convertFrom(byte[] source) {
+        return source == null ? null : new String(source);
     }
-    
+          
 
     private synchronized LinkedList<Packet> choosePackets(int windowSize, LinkedList<Packet> allPreparedPackets) {
         LinkedList<Packet> packetsToSend = new LinkedList<Packet>();
         if (allPreparedPackets != null && !allPreparedPackets.isEmpty()) {
-            if (windowSize > 1) {
-                for (int i = 0; i < windowSize; i++) {
-                    packetsToSend.add(allPreparedPackets.removeFirst());
+            if (windowSize > 1 && allPreparedPackets.size() >= windowSize) {
+                Packet topPacket = allPreparedPackets.getFirst();
+                if (topPacket.getSeqno() == 1) {
+                    System.out.println("Window size is " + windowSize);
+                    addPacketsToSend(windowSize, allPreparedPackets, packetsToSend);
+                } else if ( topPacket.getSeqno() > 1){
+                    System.out.println(" Need wait to send packet " + topPacket.getSeqno() + " until we receive ack for previous packet");
+                    waitUntilAckRecv();
+                    addPacketsToSend(getIncrementValue(), allPreparedPackets, packetsToSend);
                 }
+                
             } else {
                 Packet packet = allPreparedPackets.getFirst();
                 if (packet.getSeqno() > 1) {
-                    System.out.println(" Need wait for packet "+packet.getSeqno()+" until we receive ack for previous packet");
-                    try {
-                        wait();
-                    } catch (InterruptedException ex) {
-                        // TODO Auto-generated catch block
-                        ex.printStackTrace();
-                    }
+                    System.out.println(" Need wait for packet " + packet.getSeqno() + " until we receive ack for previous packet");
+                    waitUntilAckRecv();
                 }
                 packetsToSend.add(allPreparedPackets.removeFirst());
-                System.out.println(" window size is just one so adding packet " + packet.getSeqno());
+                System.out.println(" window size is just one so adding packet " + packet.getSeqno() + " and packets left to send are " + allPreparedPackets.size());
             }
         }
         return packetsToSend;
     }
     
+    private void waitUntilAckRecv(){
+        try {
+            wait();
+        } catch (InterruptedException ex) {
+            // TODO Auto-generated catch block
+            ex.printStackTrace();
+        }
+    }
 
-    private void sendPacket(Packet currentPacket) {
-/*        if (currentPacket.getSeqno() > 1) {
-            try {
-                System.out.println("Waiting until someone tells me to proceed with sending packets ");
-                wait();
-            } catch (InterruptedException ex1) {
-                // TODO Auto-generated catch block
-                ex1.printStackTrace();
-            }
-        }*/
+    private void addPacketsToSend(int windowSize, LinkedList<Packet> allPreparedPackets, LinkedList<Packet> packetsToSend){
+        for (int i = 0; i < windowSize; i++) {
+            System.out.println("When i is " + i + " the packet to remove is " + allPreparedPackets.getFirst().getSeqno());
+            packetsToSend.add(allPreparedPackets.removeFirst());
+            System.out.println(" packetsToSend size is " + packetsToSend.size() + " and the packet that was added was " + packetsToSend.get(i).getSeqno());
+        }
+    }
+    private void sendPacket(Packet currentPacket, SimpleDateFormat sdf, Timestamp timestamp) {
         DatagramPacket output = new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, port);
         // send the packet
         try {
             socket.send(output);
+            System.out.println("Inside SendPacket at "+ sdf.format(timestamp));
         } catch (IOException ex) {
             // TODO Auto-generated catch block
             ex.printStackTrace();
@@ -197,12 +195,29 @@ public class ThreadOne implements Runnable {
 
     public synchronized void setAckedPacket(int ackedPacket){
         System.out.println("Notified that we have recieved ack and can send next packet");
+        setIncrementValue(getCurrentPacket().getSeqno() - ackedPacket);
         notify();
         this.ackedPacket= ackedPacket;
     }
 
     public Integer getAckedPacket() {
         return this.ackedPacket;
+    }
+
+    public Integer getIncrementValue() {
+        return this.incrementValue;
+    }
+
+
+    public void setIncrementValue(Integer diff) {
+        if (diff.equals(0)){
+            System.out.println("increment the window by windowSize since diff was "+ diff);
+            incrementValue= windowSize;
+        } else {
+            System.out.println("increment the window by 1 since diff was "+ diff);
+            incrementValue= 1;
+        }
+        this.incrementValue = incrementValue;
     }
 
 
@@ -237,21 +252,11 @@ public class ThreadOne implements Runnable {
 
 
     public  Packet getCurrentPacket() {
-//        if (this.currentPacket == null){
-//            try {
-//                wait();
-//            } catch (InterruptedException ex) {
-//                // TODO Auto-generated catch block
-//                ex.printStackTrace();
-//            }
-//        }
         return this.currentPacket;
     }
 
 
     public  void setCurrentPacket(Packet currentPacket) {
-//        System.out.println("Notified that we have sent next packet");
-//        notify();
         this.currentPacket = currentPacket;
     }
 

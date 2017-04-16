@@ -10,7 +10,10 @@ import java.text.SimpleDateFormat;
 import java.util.Random;
 
 import main.Packet;
-
+/**
+ * Thread called by receiver that will receive data packets
+ *
+ */
 public class ThreadThree implements Runnable {
 
     private int windowSize;
@@ -26,7 +29,7 @@ public class ThreadThree implements Runnable {
     private int expectedPacketNumber;
     private int checksumValue;
     private int oldPacketNumber;
-    //
+
     private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
     
@@ -88,28 +91,18 @@ public class ThreadThree implements Runnable {
     }
 
     public synchronized DatagramPacket getPacket() {
-        if (this.packet == null){
-            System.out.println("Threadthree has not received any packets yet need to wait"); 
+            System.out.println("ThreadFour waits until threadThree recv a packet"); 
             try {
                 wait();
             } catch (InterruptedException ex) {
                 // TODO Auto-generated catch block
                 ex.printStackTrace();
             }            
-        } 
-//        else if (this.packet != null && getOldPacketNumber() == getAckNumber()){
-//            System.out.println("received packet "+ getReceivedPacketSeqNum()+ " and expected packet "+ getExpectedPacketNumber()+ " are not equal need to wait"); 
-//            try {
-//                wait();
-//            } catch (InterruptedException ex) {
-//                // TODO Auto-generated catch block
-//                ex.printStackTrace();
-//            }      
-//        }
         return this.packet;
     }
 
     public synchronized void setPacket(DatagramPacket packet) {
+        System.out.println("Notify threadThree got packet and handoff to threadFour to send ack");
         notify();
         this.packet = packet;
     }
@@ -126,7 +119,9 @@ public class ThreadThree implements Runnable {
         return this.expectedPacketNumber;
     }
 
-    public void setExpectedPacketNumber(int expectedPacketNumber) {
+    public synchronized void setExpectedPacketNumber(int expectedPacketNumber) {
+        System.out.println("Notify Ack was sent by threadFour and threadThree can receive next packet "+ expectedPacketNumber);
+        notify();
         this.expectedPacketNumber = expectedPacketNumber;
     }
 
@@ -173,7 +168,7 @@ public class ThreadThree implements Runnable {
         
         // print out what packet is coming
         System.out.println("Waiting on packet # " + expectedPacketNumber + "\n");
-        setExpectedPacketNumber(expectedPacketNumber);
+        //setExpectedPacketNumber(expectedPacketNumber);
         // variable to extract checksum and seq
         String cksum = "";
         seqNumber = "";
@@ -186,7 +181,7 @@ public class ThreadThree implements Runnable {
            continue;//start from while loop again
             // System.exit(0);
         }
-
+        
         // parse the data to get checksum
         for (int i = 0; i < 3; i++) {
             cksum = cksum + data[i];
@@ -268,36 +263,45 @@ public class ThreadThree implements Runnable {
                 setAckNumber(ackNumber);
                 setPacket(receivePacket);//set the packet that was received
                 expectedPacketNumber= ackNumber +1;//we should not receive next packet
+                waitUntilAckSent(ackNumber);
 
             } catch (IOException ex) {
                 System.out.println("Error happened while writing to file " + sdf.format(timestamp));
             }//end of catch
         }//end of if (cksumValue == 0)
-//        setExpectedPacketNumber(expectedPacketNumber);
-//        setOldPacketNumber(oldPacketNumber);
-        }//end of while
+        }//end of while true
     }
    
-    private synchronized void NotifyPacketReadyToAck(int ackNumber){
-        System.out.println("Notify ThreadThree has received packet "+ ackNumber);
-        notifyAll();
+    
+    private synchronized void waitUntilAckSent(int ackNumber){
+        System.out.println("ThreadThree wait till threadFour sends Ack for "+ ackNumber);
+        try {
+            wait();
+        } catch (InterruptedException ex) {
+            // TODO Auto-generated catch block
+            ex.printStackTrace();
+        }        
     }
-            /**
-             * Write the name of file that was sent by sender to output file
-             * @param packageString
-             * @throws IOException
-             */
-            public void writeToFile(String packageString) throws IOException {
-                output = new FileOutputStream(new File("output_" + packageString));
-            }
-            /**
-             * Write content of file that was sent by sender to output file
-             * @param packageByte
-             * @throws IOException
-             */
-            public void writeToFile(byte[] packageByte) throws IOException {
-                output.write(packageByte);
-            }
-        
+    /**
+     * Write the name of file that was sent by sender to output file
+     * 
+     * @param packageString
+     * @throws IOException
+     */
+    public void writeToFile(String packageString) throws IOException {
+        output = new FileOutputStream(new File("output_" + packageString));
+    }
+
+
+    /**
+     * Write content of file that was sent by sender to output file
+     * 
+     * @param packageByte
+     * @throws IOException
+     */
+    public void writeToFile(byte[] packageByte) throws IOException {
+        output.write(packageByte);
+    }
+
 
 }
