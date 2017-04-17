@@ -3,8 +3,6 @@ package receiver.thread;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Random;
 
 import main.Packet;
@@ -22,9 +20,6 @@ public class ThreadFour implements Runnable {
     private int expectedPacketNumber= 1;
     private ThreadThree threadThree;
     
-    
-    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
-    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
     /**
      * Constructor
      * @param corruption2
@@ -101,7 +96,7 @@ public class ThreadFour implements Runnable {
                 // we need to randomly need to [DROP] ack packet
                 if (corruption > 0) {
                     if (random.nextInt(10) == 7) {
-                        System.out.println("[DROP] ACK for packet number " + ackNumber + " <----- " + sdf.format(timestamp) + "\n");
+                        System.out.println("[DROP] ACK for packet number " + ackNumber + " <-----  " + System.currentTimeMillis() % 1000 + "ms \n");
                         // note down this packetNumber since it arrived and ack
                         // was prepareed
                         // but could not proceed further
@@ -117,7 +112,7 @@ public class ThreadFour implements Runnable {
                 try {
                     socket.send(ack);
                 } catch (IOException ex) {
-                    System.out.println("Error while sending ack packet" + "  " + sdf.format(timestamp));
+                    System.out.println("Error while sending ack packet" + "  " + System.currentTimeMillis() % 1000 + "ms");
                     disconnect();// exit out of program
                 }
                 // note down the packet that was just acked
@@ -126,7 +121,7 @@ public class ThreadFour implements Runnable {
                 if (ackPacket.getCksum() == 0) {
                     // increase the packetNumber once ack was sent
                     expectedPacketNum = ackNum + 1;
-                    System.out.println("[ACK] [SENT] for packet number " + ackNum + " <-----" + " " + sdf.format(timestamp) + "\n" + "next packet # should be " + (ackNum + 1) + "\n" + "\n");
+                    System.out.println("[ACK] [SENT] for packet number " + ackNum + " <-----  " + System.currentTimeMillis() % 1000 + "ms \n" + "next packet # should be " + (ackNum + 1) + "\n" + "\n");
                     threadThree.setExpectedPacketNumber(expectedPacketNum);
                     threadThree.setOldPacketNumber(ackNum);
                 }//end of if (cksumValue == 0)

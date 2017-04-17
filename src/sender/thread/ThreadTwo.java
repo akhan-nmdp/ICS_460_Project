@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketTimeoutException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -47,8 +45,7 @@ public class ThreadTwo implements Runnable {
         Packet currentPacket = null;
 
         Random random = new Random();
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        
         while (true) {
             int ackNumberValue;
 
@@ -84,7 +81,7 @@ public class ThreadTwo implements Runnable {
                     if (corruption > 0) {
                         // randomly [DROP] the Ack
                         if (random.nextInt(5) == 4) {
-                            System.out.println("[DROP] Ack for packet # " + ackNumberValue + "  " + sdf.format(timestamp) + "\n");
+                            System.out.println("[DROP] Ack for packet # " + ackNumberValue + "  " + System.currentTimeMillis() % 1000 + "ms \n");
                             // note down the ackNumber that was dropped
                             prevAckNumber = ackNumberValue;
                             // note down which packet needs to resend since ack
@@ -105,11 +102,11 @@ public class ThreadTwo implements Runnable {
                         // if ack was received for this packet before then this
                         // is a Dupl Ack
                         if (prevAckNumber.equals(ackNumberValue)) {
-                            System.out.println("[DuplAck] for packet # " + ackNumberValue + "  " + sdf.format(timestamp) + "\n" + "\n");
+                            System.out.println("[DuplAck] for packet # " + ackNumberValue + "  " + System.currentTimeMillis() % 1000 + "ms \n" + "\n");
                         } else {
                             // otherwise this is the first time we are receiving
                             // ack for this packet
-                            System.out.println("[AckRcvd] for packet # " + ackNumberValue + "  " + sdf.format(timestamp) + "\n" + "\n");
+                            System.out.println("[AckRcvd] for packet # " + ackNumberValue + "  " + System.currentTimeMillis() % 1000 + "ms \n" + "\n");
                         }
                         expectedPacketNumber = ackNumberValue + 1;
                         System.out.println("The next packet that should be ACK is packet " + expectedPacketNumber);
@@ -118,7 +115,7 @@ public class ThreadTwo implements Runnable {
                     }// end of if (checksumValue == 0)
                 } catch (SocketTimeoutException ex) {
                     // while waiting for receiver sender timed out
-                    System.out.println("[TimeOut] while waiting to receieve ACK for packet # " + currentPacket.getSeqno() + "  " + sdf.format(timestamp) + " \n");
+                    System.out.println("[TimeOut] while waiting to receieve ACK for packet # " + currentPacket.getSeqno() + "  " + System.currentTimeMillis() % 1000 + "ms \n");
                     // note down this packet will have to resent
                     prevPacketNumber = currentPacket.getSeqno();
                     threadOne.setPreviousPacketNumber(prevPacketNumber);

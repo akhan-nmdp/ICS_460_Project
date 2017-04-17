@@ -5,8 +5,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -66,9 +64,6 @@ public class ThreadOne implements Runnable {
         Integer delayedPacketNumber = 0;
         Integer prevPacketNumber = 0;
         Random random = new Random();
-        
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
             // check the packet and set its checksum
             while (!packets.isEmpty()){
@@ -86,12 +81,12 @@ public class ThreadOne implements Runnable {
                             // randomly make this packet a bad packet
                             if (random.nextInt(5) == 2) {
                                 // this packet is bad packet
-                                System.out.println("[ERRR] packet # " + currentPacket.getSeqno() + " is bad packet  " + sdf.format(timestamp) + "\n");
+                                System.out.println("[ERRR] packet # " + currentPacket.getSeqno() + " is bad packet  " + System.currentTimeMillis() % 1000 + "ms \n");
                                 // assign bad checksum to packet
                                 currentPacket.setCksum(badCheckSum);
                             } else if (random.nextInt(5) == 3) {
                                 // randomly make this packet delayed
-                                System.out.println("[DLYD] packet # " + currentPacket.getSeqno() + "  " + sdf.format(timestamp) + "\n");
+                                System.out.println("[DLYD] packet # " + currentPacket.getSeqno() + "  " + System.currentTimeMillis() % 1000 + "ms \n");
                                 for (int z = 0; z <= timeout; z++) {
                                     // do nothing just wait
                                 }
@@ -102,18 +97,18 @@ public class ThreadOne implements Runnable {
                         }// end of if (corruption > 0)
 
                         // create datagram packet which will be sent to receiver
-                        sendPacket(currentPacket, sdf, timestamp);
+                        sendPacket(currentPacket);
                         
                         if (prevPacketNumber.equals(currentPacket.getSeqno()) && !delayedPacketNumber.equals(currentPacket.getSeqno())) {
                             // only need to do [RESEND] when packet was not a
                             // delayedPacket
                             // and when packet was sent before but no ack was received
-                            System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "  " + sdf.format(timestamp) + "  -----> \n");
+                            System.out.println("[ReSend.]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "  " + System.currentTimeMillis() % 1000 + "ms  -----> \n");
                         } else {
                             long endTime = System.currentTimeMillis() - startTime;
                             // otherwise for delayedPackets and normalPackets print SENT
                             System.out.println("[SENDing]: packet # " + currentPacket.getSeqno() + " with datasize of " + currentPacket.getData().length + "\n");
-                            System.out.println("[SENT] packet # " + currentPacket.getSeqno() + " in " + endTime + " ms  " +  sdf.format(timestamp) + "  -----> \n");
+                            System.out.println("[SENT] packet # " + currentPacket.getSeqno() + " in " + endTime + " ms  " +  System.currentTimeMillis() % 1000 + "ms  -----> \n");
                             setCurrentPacket(currentPacket);
                             System.out.println("Data in the packet was "+ convertFrom(currentPacket.getData()));
                         }
@@ -188,12 +183,12 @@ public class ThreadOne implements Runnable {
             System.out.println(" packetsToSend size is " + packetsToSend.size() + " and the packet that was added was " + packetsToSend.get(i).getSeqno());
         }
     }
-    private void sendPacket(Packet currentPacket, SimpleDateFormat sdf, Timestamp timestamp) {
+    private void sendPacket(Packet currentPacket) {
         DatagramPacket output = new DatagramPacket(currentPacket.getData(), currentPacket.getLength(), ip, port);
         // send the packet
         try {
             socket.send(output);
-            System.out.println("Inside SendPacket at "+ sdf.format(timestamp));
+            System.out.println("Inside SendPacket at "+ System.currentTimeMillis() % 1000);
         } catch (IOException ex) {
             // TODO Auto-generated catch block
             ex.printStackTrace();
