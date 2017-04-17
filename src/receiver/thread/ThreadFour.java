@@ -132,7 +132,6 @@ public class ThreadFour implements Runnable {
                 }//end of if (cksumValue == 0)
             }// end of threadThree.getPacket() != null
         }// end of while packet != null
-      
     }
 
     public void disconnect(){

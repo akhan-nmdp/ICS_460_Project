@@ -181,7 +181,7 @@ public class ThreadThree implements Runnable {
            continue;//start from while loop again
             // System.exit(0);
         }
-        
+
         // parse the data to get checksum
         for (int i = 0; i < 3; i++) {
             cksum = cksum + data[i];

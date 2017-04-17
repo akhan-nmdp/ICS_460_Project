@@ -9,7 +9,11 @@ public class Packet {
     int ackno;    //32-bit 4-byte
     int seqno ;   //32-bit 4-byte Data packet Only
     byte[] data; //0-500 bytes. Data packet only. Variable
+    boolean last;
     
+    public Packet(){
+        
+    }
     public Packet(short cksum, short len, int ackno)
     {
         this.cksum = cksum;
@@ -101,4 +105,13 @@ public class Packet {
     public void setData(byte[] data) {
         this.data = data;
     }
+
+    public boolean isLast() {
+        return this.last;
+    }
+
+    public void setLast(boolean last) {
+        this.last = last;
+    }
+    
 }

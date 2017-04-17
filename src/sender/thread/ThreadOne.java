@@ -128,8 +128,9 @@ public class ThreadOne implements Runnable {
                     setPreviousPacketNumber(prevPacketNumber);
                     // add this packet in front as it need to be resent
                     packets.addFirst(currentPacket);
-                }                   
-            }//end of while (!packets.isEmpty())            
+                }
+            }//end of while (!packets.isEmpty())
+            return;//end the thread
     }//end of run 
             
     private static String convertFrom(byte[] source) {
@@ -160,6 +161,13 @@ public class ThreadOne implements Runnable {
                 packetsToSend.add(allPreparedPackets.removeFirst());
                 System.out.println(" window size is just one so adding packet " + packet.getSeqno() + " and packets left to send are " + allPreparedPackets.size());
             }
+        }
+        if (allPreparedPackets.isEmpty() && packets.size() == getAckedPacket()){
+//            Packet emptyPacket= new Packet();
+//            emptyPacket.setLast(true);
+//            packetsToSend.add(emptyPacket);
+            System.out.println("The last ack packet was "+ getAckedPacket()+ " same as the packets we needed to send "+ packets.size()+ " so exiting the system");
+            System.exit(0);
         }
         return packetsToSend;
     }
@@ -258,6 +266,16 @@ public class ThreadOne implements Runnable {
 
     public  void setCurrentPacket(Packet currentPacket) {
         this.currentPacket = currentPacket;
+    }
+
+
+    public LinkedList<Packet> getPackets() {
+        return this.packets;
+    }
+
+
+    public void setPackets(LinkedList<Packet> packets) {
+        this.packets = packets;
     }
 
 }
