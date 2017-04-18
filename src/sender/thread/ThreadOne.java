@@ -197,7 +197,7 @@ public class ThreadOne implements Runnable {
     }
 
     public synchronized void setAckedPacket(int ackedPacket){
-        System.out.println("Notified that we have recieved ack and can send next packet");
+        System.out.println("Notified that we have recieved ack and can [MoveWnd]");
         setIncrementValue(getCurrentPacket().getSeqno() - ackedPacket);
         notify();
         this.ackedPacket= ackedPacket;
